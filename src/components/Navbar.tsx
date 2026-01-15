@@ -2,23 +2,30 @@
 
 import Link from "next/link";
 import { Search } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function Navbar() {
     const [isScrolled, setIsScrolled] = useState(false);
 
-    // Handle scroll effect
-    if (typeof window !== "undefined") {
-        window.addEventListener("scroll", () => {
+    // Handle scroll effect with proper cleanup
+    useEffect(() => {
+        const handleScroll = () => {
             setIsScrolled(window.scrollY > 10);
-        });
-    }
+        };
+
+        window.addEventListener("scroll", handleScroll);
+
+        // Cleanup function to prevent memory leaks
+        return () => {
+            window.removeEventListener("scroll", handleScroll);
+        };
+    }, []); // Empty dependency array - run once on mount
 
     return (
         <nav
             className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled
-                    ? "bg-white/80 backdrop-blur-md shadow-sm"
-                    : "bg-transparent"
+                ? "bg-white/80 backdrop-blur-md shadow-sm"
+                : "bg-transparent"
                 }`}
         >
             <div className="max-w-7xl mx-auto px-6 lg:px-8">
