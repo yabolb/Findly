@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
+import ConsentManager from "@/components/layout/ConsentManager";
+import Footer from "@/components/layout/Footer";
 
 export const metadata: Metadata = {
     title: "Findly - Find everything. Second-hand.",
     description: "Discover amazing second-hand items near you. Buy and sell with ease.",
+    metadataBase: new URL('https://findly.com'),
 };
 
 export default function RootLayout({
@@ -13,11 +16,20 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="en">
-            <body className="bg-background min-h-screen" suppressHydrationWarning>
+        <html lang="en" suppressHydrationWarning>
+            <body className="bg-background min-h-screen flex flex-col" suppressHydrationWarning>
+                {/* GDPR Consent Management */}
+                <ConsentManager />
+
                 <Navbar />
-                {children}
+
+                <main className="flex-1">
+                    {children}
+                </main>
+
+                <Footer />
             </body>
         </html>
     );
 }
+

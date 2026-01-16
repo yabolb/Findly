@@ -20,14 +20,26 @@ export async function generateMetadata({ searchParams }: SearchPageProps): Promi
         location: params.location,
     });
 
+    // Build canonical URL to prevent duplicate content
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://findly.com';
+    const queryParts: string[] = [];
+    if (params.q) queryParts.push(`q=${encodeURIComponent(params.q)}`);
+    if (params.category) queryParts.push(`category=${params.category}`);
+    if (params.location) queryParts.push(`location=${encodeURIComponent(params.location)}`);
+    const canonical = `${baseUrl}/search${queryParts.length > 0 ? '?' + queryParts.join('&') : ''}`;
+
     return {
         title: metadata.title,
         description: metadata.description,
         keywords: metadata.keywords,
+        alternates: {
+            canonical,
+        },
         openGraph: {
             title: metadata.ogTitle || metadata.title,
             description: metadata.ogDescription || metadata.description,
             type: "website",
+            url: canonical,
         },
         twitter: {
             card: "summary_large_image",

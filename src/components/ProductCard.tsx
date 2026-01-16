@@ -81,8 +81,25 @@ export default function ProductCard({ product }: ProductCardProps) {
                         className={`w-full h-full object-cover rounded-2xl p-3 transition-opacity duration-300 ${imageLoaded ? "opacity-100" : "opacity-0"
                             }`}
                         onLoad={() => setImageLoaded(true)}
+                        onError={(e) => {
+                            // Fallback to a gradient placeholder if image fails to load
+                            console.error('Image failed to load:', product.image_url);
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            // Don't set imageLoaded to true so fallback shows
+                        }}
                         loading="lazy"
+                        crossOrigin="anonymous"
                     />
+
+                    {/* Fallback gradient if image hasn't loaded or failed */}
+                    <div className={`absolute inset-0 bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center transition-opacity ${imageLoaded ? 'opacity-0' : 'opacity-100'}`}>
+                        <div className="text-6xl opacity-20">
+                            {product.platform === 'wallapop' ? '🛒' :
+                                product.platform === 'vinted' ? '👕' :
+                                    product.platform === 'ebay' ? '🏪' : '📦'}
+                        </div>
+                    </div>
 
                     {/* Glassmorphism Source Badge - Top Right */}
                     <div className="absolute top-5 right-5 px-3 py-1.5 rounded-full backdrop-blur-md bg-white/70 border border-white/40 shadow-lg flex items-center gap-1.5">
