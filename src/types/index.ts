@@ -76,6 +76,9 @@ export interface CategoryItem {
     subcategories?: CategoryItem[];
 }
 
+// Sort options for search results
+export type SortOption = "relevance" | "price_asc" | "price_desc" | "date_desc";
+
 // Search filters
 export interface SearchFilters {
     query?: string;
@@ -87,6 +90,8 @@ export interface SearchFilters {
     radius?: number; // in kilometers
     platform?: Platform[];
     priceScore?: PriceScore[];
+    dateFilter?: "24h" | "week" | "month" | "all";
+    sortBy?: SortOption;
 }
 
 // Paginated response
