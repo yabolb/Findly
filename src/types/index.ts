@@ -39,14 +39,11 @@ export interface SyncLog {
     id: string;
     platform: Platform;
     status: SyncStatus;
-    error_code: number | null;
+    http_status: number | null;
     error_message: string | null;
     items_found: number;
-    items_inserted: number;
-    items_updated: number;
-    search_query: string | null;
-    request_duration_ms: number | null;
-    ban_reason: string | null;
+    items_added: number;
+    response_time_ms: number | null;
     created_at: Date;
 }
 

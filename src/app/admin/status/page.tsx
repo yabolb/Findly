@@ -293,7 +293,8 @@ function PlatformCard({ data }: { data: PlatformHealthData }) {
                                     data.recentLogs.slice(0, 10).map((log, index) => (
                                         <div
                                             key={log.id || index}
-                                            className="flex items-center justify-between py-2 px-3 bg-slate-50 rounded-lg"
+                                            className="flex items-center justify-between py-2 px-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors cursor-help"
+                                            title={log.error_message || "No specific error details"}
                                         >
                                             <div className="flex items-center gap-3">
                                                 <span className={`
@@ -310,9 +311,9 @@ function PlatformCard({ data }: { data: PlatformHealthData }) {
                                                 <span className="text-xs text-slate-500">
                                                     {formatTimeAgo(log.created_at)}
                                                 </span>
-                                                {log.error_code && (
+                                                {log.http_status && (
                                                     <span className="ml-2 text-xs text-red-500">
-                                                        HTTP {log.error_code}
+                                                        HTTP {log.http_status}
                                                     </span>
                                                 )}
                                             </div>
@@ -430,14 +431,11 @@ export default function AdminStatusPage() {
                 id: `mock-${config.id}-${i}`,
                 platform: config.id,
                 status: Math.random() > 0.2 ? "success" : "error" as SyncStatus,
-                error_code: null,
+                http_status: null,
                 error_message: null,
                 items_found: Math.floor(Math.random() * 50),
-                items_inserted: Math.floor(Math.random() * 30),
-                items_updated: Math.floor(Math.random() * 10),
-                search_query: null,
-                request_duration_ms: Math.floor(Math.random() * 2000) + 500,
-                ban_reason: null,
+                items_added: Math.floor(Math.random() * 30),
+                response_time_ms: Math.floor(Math.random() * 2000) + 500,
                 created_at: new Date(Date.now() - i * 3600000),
             }));
 
@@ -457,7 +455,7 @@ export default function AdminStatusPage() {
                     successRate: Math.round((successCount / mockLogs.length) * 100),
                     totalItemsContributed: mockLogs.reduce((sum, l) => sum + l.items_found, 0),
                     avgResponseTime: Math.round(
-                        mockLogs.reduce((sum, l) => sum + (l.request_duration_ms || 0), 0) / mockLogs.length
+                        mockLogs.reduce((sum, l) => sum + (l.response_time_ms || 0), 0) / mockLogs.length
                     ),
                 },
                 healthStatus,
@@ -756,18 +754,18 @@ export default function AdminStatusPage() {
                                                 {data.stats.totalItemsContributed.toLocaleString()}
                                             </p>
                                             <p className="text-xs text-slate-500">
-                                                {data.lastSync?.items_inserted || 0} last sync
+                                                {data.lastSync?.items_added || 0} last sync
                                             </p>
                                         </td>
                                         <td className="px-6 py-4">
-                                            {data.lastSync?.error_code ? (
-                                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${data.lastSync.error_code === 403 || data.lastSync.error_code === 429
-                                                        ? "bg-red-100 text-red-700"
-                                                        : data.lastSync.error_code >= 500
-                                                            ? "bg-amber-100 text-amber-700"
-                                                            : "bg-slate-100 text-slate-700"
+                                            {data.lastSync?.http_status ? (
+                                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${data.lastSync.http_status === 403 || data.lastSync.http_status === 429
+                                                    ? "bg-red-100 text-red-700"
+                                                    : data.lastSync.http_status >= 500
+                                                        ? "bg-amber-100 text-amber-700"
+                                                        : "bg-slate-100 text-slate-700"
                                                     }`}>
-                                                    {data.lastSync.error_code}
+                                                    {data.lastSync.http_status}
                                                 </span>
                                             ) : (
                                                 <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
@@ -778,14 +776,14 @@ export default function AdminStatusPage() {
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2">
                                                 <span className={`w-2.5 h-2.5 rounded-full ${data.healthStatus === "healthy" ? "bg-emerald-500" :
-                                                        data.healthStatus === "banned" ? "bg-red-500 animate-pulse" :
-                                                            data.healthStatus === "suspicious" ? "bg-amber-500" :
-                                                                "bg-slate-400"
+                                                    data.healthStatus === "banned" ? "bg-red-500 animate-pulse" :
+                                                        data.healthStatus === "suspicious" ? "bg-amber-500" :
+                                                            "bg-slate-400"
                                                     }`} />
                                                 <span className={`text-sm font-medium ${data.healthStatus === "healthy" ? "text-emerald-700" :
-                                                        data.healthStatus === "banned" ? "text-red-700" :
-                                                            data.healthStatus === "suspicious" ? "text-amber-700" :
-                                                                "text-slate-600"
+                                                    data.healthStatus === "banned" ? "text-red-700" :
+                                                        data.healthStatus === "suspicious" ? "text-amber-700" :
+                                                            "text-slate-600"
                                                     }`}>
                                                     {data.healthStatus.charAt(0).toUpperCase() + data.healthStatus.slice(1)}
                                                 </span>

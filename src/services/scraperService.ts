@@ -57,14 +57,14 @@ export class SyncLogService {
                 id: uuidv4(),
                 platform: result.platform,
                 status: result.status,
-                error_code: result.statusCode !== 200 ? result.statusCode : null,
-                error_message: result.errorMessage,
+                http_status: result.statusCode !== 200 ? result.statusCode : null,
+                // Combine relevant info into error_message since ban_reason/query columns don't exist
+                error_message: result.banReason
+                    ? `[${searchQuery || '?'}] Banned: ${result.banReason}`
+                    : (searchQuery ? `[${searchQuery}] ${result.errorMessage || ''}` : result.errorMessage),
                 items_found: result.itemsFound,
-                items_inserted: insertedCount,
-                items_updated: updatedCount,
-                search_query: searchQuery,
-                request_duration_ms: result.requestDurationMs,
-                ban_reason: result.banReason,
+                items_added: insertedCount,
+                response_time_ms: result.requestDurationMs,
                 created_at: new Date().toISOString(),
             };
 

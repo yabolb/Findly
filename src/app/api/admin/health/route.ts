@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
             const totalItems = recentLogs.reduce((sum, l) => sum + (l.items_found || 0), 0);
             const avgResponse = recentLogs.length > 0
                 ? Math.round(
-                    recentLogs.reduce((sum, l) => sum + (l.request_duration_ms || 0), 0) /
+                    recentLogs.reduce((sum, l) => sum + (l.response_time_ms || 0), 0) /
                     recentLogs.length
                 )
                 : 0;
