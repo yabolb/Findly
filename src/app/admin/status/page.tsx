@@ -669,10 +669,139 @@ export default function AdminStatusPage() {
                     </motion.div>
                 </div>
 
+                {/* RED PULSE ALERT - Shows when any platform is banned */}
+                {platformsData.some(p => p.healthStatus === "banned") && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mb-8 p-6 bg-gradient-to-r from-red-600 to-red-700 rounded-2xl shadow-lg relative overflow-hidden"
+                    >
+                        {/* Animated pulse background */}
+                        <div className="absolute inset-0 bg-red-500 animate-pulse opacity-20" />
+
+                        <div className="relative flex items-center gap-4">
+                            <div className="p-3 bg-white/20 rounded-xl">
+                                <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="text-lg font-bold text-white">
+                                    🚨 Platform Ban Detected
+                                </h3>
+                                <p className="text-red-100 mt-1">
+                                    {platformsData.filter(p => p.healthStatus === "banned").map(p => p.config.displayName).join(", ")} returning 403/429 errors.
+                                    Proxy may be blocked. Check residential proxy configuration.
+                                </p>
+                            </div>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={fetchHealthData}
+                                    className="px-4 py-2 bg-white/20 hover:bg-white/30 text-white text-sm font-medium rounded-lg transition-colors"
+                                >
+                                    Retry
+                                </button>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+
+                {/* Platform Status Table */}
+                <div className="mb-8">
+                    <h2 className="text-lg font-semibold text-slate-800 mb-4">
+                        Worker Status Table
+                    </h2>
+                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">
+                        <table className="w-full">
+                            <thead className="bg-slate-50 border-b border-slate-200">
+                                <tr>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wide">Platform</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wide">Last Sync</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wide">Items Added</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wide">HTTP Status</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wide">Health</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {platformsData.map((data) => (
+                                    <tr
+                                        key={data.platform}
+                                        className={`hover:bg-slate-50 transition-colors ${data.healthStatus === "banned" ? "bg-red-50/50" : ""
+                                            }`}
+                                    >
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-3">
+                                                <div
+                                                    className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold"
+                                                    style={{ backgroundColor: data.config.primaryColor }}
+                                                >
+                                                    {data.config.displayName.charAt(0)}
+                                                </div>
+                                                <div>
+                                                    <p className="font-semibold text-slate-900">{data.config.displayName}</p>
+                                                    <p className="text-xs text-slate-500">{data.config.baseUrl}</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <p className="text-sm text-slate-900" suppressHydrationWarning>
+                                                {data.lastSync ? formatTimeAgo(data.lastSync.created_at) : "Never"}
+                                            </p>
+                                            <p className="text-xs text-slate-500">
+                                                {data.stats.avgResponseTime}ms avg
+                                            </p>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <p className="text-lg font-bold text-slate-900">
+                                                {data.stats.totalItemsContributed.toLocaleString()}
+                                            </p>
+                                            <p className="text-xs text-slate-500">
+                                                {data.lastSync?.items_inserted || 0} last sync
+                                            </p>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            {data.lastSync?.error_code ? (
+                                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${data.lastSync.error_code === 403 || data.lastSync.error_code === 429
+                                                        ? "bg-red-100 text-red-700"
+                                                        : data.lastSync.error_code >= 500
+                                                            ? "bg-amber-100 text-amber-700"
+                                                            : "bg-slate-100 text-slate-700"
+                                                    }`}>
+                                                    {data.lastSync.error_code}
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
+                                                    200
+                                                </span>
+                                            )}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-2">
+                                                <span className={`w-2.5 h-2.5 rounded-full ${data.healthStatus === "healthy" ? "bg-emerald-500" :
+                                                        data.healthStatus === "banned" ? "bg-red-500 animate-pulse" :
+                                                            data.healthStatus === "suspicious" ? "bg-amber-500" :
+                                                                "bg-slate-400"
+                                                    }`} />
+                                                <span className={`text-sm font-medium ${data.healthStatus === "healthy" ? "text-emerald-700" :
+                                                        data.healthStatus === "banned" ? "text-red-700" :
+                                                            data.healthStatus === "suspicious" ? "text-amber-700" :
+                                                                "text-slate-600"
+                                                    }`}>
+                                                    {data.healthStatus.charAt(0).toUpperCase() + data.healthStatus.slice(1)}
+                                                </span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
                 {/* Platform Cards */}
                 <div className="space-y-6">
                     <h2 className="text-lg font-semibold text-slate-800">
-                        Platform Status
+                        Platform Details
                     </h2>
 
                     {isLoading ? (

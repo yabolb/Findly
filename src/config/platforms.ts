@@ -354,7 +354,7 @@ export const PLATFORMS_CONFIG: Record<Platform, PlatformConfig> = {
         searchPath: "/anuncios/{query}.htm",
 
         // Status
-        status: "inactive",  // Currently disabled for maintenance
+        status: "active",
 
         // Rate Limiting
         requestsPerMinute: 15,
