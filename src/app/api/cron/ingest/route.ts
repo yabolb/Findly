@@ -1,335 +1,91 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase-admin";
-import {
-    PLATFORMS_CONFIG,
-    getActivePlatforms,
-    getPlatformConfig,
-    detectBan,
-    buildSearchUrl
-} from "@/config/platforms";
-import { Platform, SyncStatus } from "@/types";
-import {
-    normalizeProduct,
-    normalizeProductBatch,
-    isValidNormalizedProduct,
-    RawProductData,
-    generateProductId
-} from "@/lib/mappers";
-import { hasWantedIntent, isNoise, getPriceScoreForProduct } from "@/services/trust-engine";
-import { Product } from "@/types";
-import { v4 as uuidv4 } from "uuid";
+import { SyncOrchestrator } from "@/services/sync-orchestrator";
 
 /**
- * AUTOMATED CRON INGESTION
- * ========================
- * Loops through active platforms, runs scrapers, and logs results.
+ * AUTOMATED CRON INGESTION - ADVANCED SCRAPER
+ * ===========================================
+ * Uses the full scraping stack:
+ * - Multi-Platform Scraper (Wallapop API, Vinted API, eBay API/Scrape, Milanuncios Scrape)
+ * - Proxy Chain (WebScrapingAI → ScraperAPI → ScrapingBee)
+ * - Trust Engine (price scoring, spam filtering)
+ * - Deduplication Engine (URL + title similarity)
+ * - Bulk upsert to Supabase
  * 
- * Endpoint: GET /api/cron/ingest
- * Security: Requires CRON_SECRET for authentication
+ * Endpoint: POST/GET /api/cron/ingest
+ * Security: Requires INGEST_SECRET_KEY for authentication
  * 
- * This should be triggered by:
- * - Vercel Cron Jobs
- * - External scheduler (e.g., GitHub Actions, Supabase Edge Functions)
+ * Trigger via:
+ * - Vercel Cron Jobs (automated)
+ * - Manual API call (for testing)
  */
-
-// Cron secret for authentication
-const CRON_SECRET = process.env.CRON_SECRET;
-
-// Default search queries for ingestion
-const DEFAULT_SEARCH_QUERIES = [
-    "iphone",
-    "macbook",
-    "playstation",
-    "nike",
-    "vintage",
-    "bicicleta",
-    "sofa",
-    "coche",
-];
-
-interface ScrapeResult {
-    platform: Platform;
-    success: boolean;
-    status: SyncStatus;
-    statusCode: number;
-    errorMessage: string | null;
-    banReason: string | null;
-    itemsFound: number;
-    itemsInserted: number;
-    itemsUpdated: number;
-    requestDurationMs: number;
-}
-
-/**
- * Log sync result to database
- */
-async function logSync(
-    result: ScrapeResult,
-    searchQuery: string
-): Promise<void> {
-    try {
-        const logEntry = {
-            id: uuidv4(),
-            platform: result.platform,
-            status: result.status,
-            error_code: result.statusCode !== 200 ? result.statusCode : null,
-            error_message: result.errorMessage,
-            items_found: result.itemsFound,
-            items_inserted: result.itemsInserted,
-            items_updated: result.itemsUpdated,
-            search_query: searchQuery,
-            request_duration_ms: result.requestDurationMs,
-            ban_reason: result.banReason,
-            created_at: new Date().toISOString(),
-        };
-
-        const { error } = await supabaseAdmin
-            .from("sync_logs")
-            .insert(logEntry);
-
-        if (error) {
-            console.error(`[Cron] Failed to log sync for ${result.platform}:`, error.message);
-        }
-    } catch (err) {
-        console.error("[Cron] Exception logging sync:", err);
-    }
-}
-
-/**
- * Scrape a single platform
- */
-async function scrapePlatform(
-    platform: Platform,
-    query: string
-): Promise<ScrapeResult> {
-    const startTime = Date.now();
-    const config = getPlatformConfig(platform);
-
-    if (!config) {
-        return {
-            platform,
-            success: false,
-            status: "error",
-            statusCode: 0,
-            errorMessage: "Platform not configured",
-            banReason: null,
-            itemsFound: 0,
-            itemsInserted: 0,
-            itemsUpdated: 0,
-            requestDurationMs: 0,
-        };
-    }
-
-    // Check if platform is active
-    if (config.status !== "active") {
-        return {
-            platform,
-            success: false,
-            status: "error",
-            statusCode: 0,
-            errorMessage: "Platform is not active",
-            banReason: null,
-            itemsFound: 0,
-            itemsInserted: 0,
-            itemsUpdated: 0,
-            requestDurationMs: 0,
-        };
-    }
-
-    try {
-        // Build search URL
-        const url = buildSearchUrl(platform, query);
-
-        // Get a random user agent
-        const userAgents = [
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15",
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0",
-        ];
-        const userAgent = userAgents[Math.floor(Math.random() * userAgents.length)];
-
-        // Make the request
-        const response = await fetch(url, {
-            method: "GET",
-            headers: {
-                ...config.headers,
-                "User-Agent": userAgent,
-            },
-            // Timeout after 30 seconds
-            signal: AbortSignal.timeout(30000),
-        });
-
-        const body = await response.text();
-        const duration = Date.now() - startTime;
-
-        // Analyze response for bans
-        const { isBanned, reason: banReason } = detectBan(
-            platform,
-            response.status,
-            body
-        );
-
-        // Determine status
-        let status: SyncStatus = "success";
-        let errorMessage: string | null = null;
-
-        if (isBanned) {
-            status = "banned";
-            errorMessage = banReason;
-        } else if (response.status >= 500) {
-            status = "error";
-            errorMessage = `Server error: ${response.status}`;
-        } else if (response.status === 403) {
-            status = "banned";
-            errorMessage = "HTTP 403 - Forbidden";
-        } else if (response.status === 429) {
-            status = "banned";
-            errorMessage = "HTTP 429 - Rate Limited";
-        } else if (!response.ok) {
-            status = "error";
-            errorMessage = `HTTP ${response.status}`;
-        }
-
-        // TODO: Parse products from response
-        // For now, we simulate finding items
-        const itemsFound = status === "success" ? Math.floor(Math.random() * 30) : 0;
-
-        // Check for suspicious (200 but no items)
-        if (response.status === 200 && itemsFound === 0 && status === "success") {
-            status = "suspicious";
-            errorMessage = "200 OK but 0 items found";
-        }
-
-        return {
-            platform,
-            success: status === "success",
-            status,
-            statusCode: response.status,
-            errorMessage,
-            banReason: status === "banned" ? (banReason || errorMessage) : null,
-            itemsFound,
-            itemsInserted: 0, // TODO: Actual insertion count
-            itemsUpdated: 0,  // TODO: Actual update count
-            requestDurationMs: duration,
-        };
-
-    } catch (error) {
-        const duration = Date.now() - startTime;
-        const errorMessage = error instanceof Error ? error.message : String(error);
-
-        // Check if it's a timeout
-        const isTimeout = errorMessage.includes("timeout") || errorMessage.includes("aborted");
-
-        return {
-            platform,
-            success: false,
-            status: isTimeout ? "timeout" : "error",
-            statusCode: 0,
-            errorMessage,
-            banReason: null,
-            itemsFound: 0,
-            itemsInserted: 0,
-            itemsUpdated: 0,
-            requestDurationMs: duration,
-        };
-    }
-}
 
 /**
  * GET /api/cron/ingest
- * Main cron handler
+ * Main cron handler - automated trigger
  */
 export async function GET(request: NextRequest) {
-    // Validate cron secret
-    const authHeader = request.headers.get("Authorization");
-    const cronHeader = request.headers.get("X-Cron-Secret");
-
-    const providedSecret = authHeader?.replace("Bearer ", "") || cronHeader;
-
-    // Allow Vercel cron jobs (they have a specific header)
-    const isVercelCron = request.headers.get("x-vercel-cron") === "true";
-
-    if (!isVercelCron && CRON_SECRET && providedSecret !== CRON_SECRET) {
-        return NextResponse.json(
-            { error: "Unauthorized - Invalid cron secret" },
-            { status: 401 }
-        );
-    }
-
     const startTime = Date.now();
-    const results: ScrapeResult[] = [];
 
     try {
-        // Get active platforms
-        const activePlatforms = getActivePlatforms();
+        // Validate authentication
+        const authHeader = request.headers.get("Authorization");
+        const ingestSecret = process.env.INGEST_SECRET_KEY;
 
-        if (activePlatforms.length === 0) {
-            return NextResponse.json({
-                success: true,
-                message: "No active platforms to scrape",
-                results: [],
-            });
-        }
+        // Allow Vercel cron jobs (they have a specific header)
+        const isVercelCron = request.headers.get("x-vercel-cron") === "true";
 
-        // Select a random search query
-        const query = DEFAULT_SEARCH_QUERIES[
-            Math.floor(Math.random() * DEFAULT_SEARCH_QUERIES.length)
-        ];
+        const providedSecret = authHeader?.replace("Bearer ", "");
 
-        console.log(`[Cron] Starting ingestion for ${activePlatforms.length} platforms with query: "${query}"`);
-
-        // Scrape each platform sequentially (to avoid rate limits)
-        for (const platformConfig of activePlatforms) {
-            console.log(`[Cron] Scraping ${platformConfig.displayName}...`);
-
-            // Apply rate limiting delay before scraping
-            if (results.length > 0) {
-                await new Promise((resolve) => setTimeout(resolve, 2000));
-            }
-
-            const result = await scrapePlatform(platformConfig.id, query);
-            results.push(result);
-
-            // Log the result
-            await logSync(result, query);
-
-            console.log(
-                `[Cron] ${platformConfig.displayName}: ${result.status} - ${result.itemsFound} items (${result.requestDurationMs}ms)`
+        if (!isVercelCron && ingestSecret && providedSecret !== ingestSecret) {
+            return NextResponse.json(
+                { success: false, error: "Unauthorized - Invalid secret" },
+                { status: 401 }
             );
         }
 
-        const totalDuration = Date.now() - startTime;
-        const successCount = results.filter((r) => r.success).length;
-        const bannedCount = results.filter((r) => r.status === "banned").length;
+        console.log("🚀 [Cron] Starting advanced global sync...");
+
+        // Initialize the orchestrator
+        const orchestrator = new SyncOrchestrator();
+
+        // Default search query (can be randomized for variety)
+        const queries = [
+            "iPhone",
+            "MacBook",
+            "PlayStation",
+            "Nike Air Max",
+            "Bicicleta",
+            "Sofá",
+        ];
+        const query = queries[Math.floor(Math.random() * queries.length)];
+
+        console.log(`📝 [Cron] Search query: "${query}"`);
+
+        // Run the global sync
+        const result = await orchestrator.runGlobalSync(query);
+
+        const duration = Date.now() - startTime;
+
+        console.log("✅ [Cron] Global sync complete");
 
         return NextResponse.json({
             success: true,
-            message: `Ingestion complete: ${successCount}/${results.length} successful`,
+            message: "Advanced scraper completed successfully",
             query,
-            duration_ms: totalDuration,
-            summary: {
-                total_platforms: results.length,
-                successful: successCount,
-                banned: bannedCount,
-                errors: results.length - successCount - bannedCount,
-                total_items_found: results.reduce((sum, r) => sum + r.itemsFound, 0),
-            },
-            results: results.map((r) => ({
-                platform: r.platform,
-                status: r.status,
-                items_found: r.itemsFound,
-                duration_ms: r.requestDurationMs,
-                error: r.errorMessage,
-            })),
+            duration_ms: duration,
+            result,
         });
 
     } catch (error) {
-        console.error("[Cron] Fatal error:", error);
+        const duration = Date.now() - startTime;
+        console.error("❌ [Cron] Fatal error:", error);
+
         return NextResponse.json(
             {
                 success: false,
                 error: "Cron job failed",
                 details: error instanceof Error ? error.message : String(error),
+                duration_ms: duration,
             },
             { status: 500 }
         );
@@ -341,64 +97,59 @@ export async function GET(request: NextRequest) {
  * Manual trigger with custom parameters
  */
 export async function POST(request: NextRequest) {
-    // Validate cron secret
-    const authHeader = request.headers.get("Authorization");
-    const cronHeader = request.headers.get("X-Cron-Secret");
-
-    const providedSecret = authHeader?.replace("Bearer ", "") || cronHeader;
-
-    if (CRON_SECRET && providedSecret !== CRON_SECRET) {
-        return NextResponse.json(
-            { error: "Unauthorized - Invalid cron secret" },
-            { status: 401 }
-        );
-    }
+    const startTime = Date.now();
 
     try {
-        const body = await request.json();
-        const { platforms, query } = body as {
-            platforms?: Platform[];
-            query?: string;
-        };
+        // Validate authentication
+        const authHeader = request.headers.get("Authorization");
+        const ingestSecret = process.env.INGEST_SECRET_KEY;
 
-        const searchQuery = query || DEFAULT_SEARCH_QUERIES[
-            Math.floor(Math.random() * DEFAULT_SEARCH_QUERIES.length)
-        ];
+        const providedSecret = authHeader?.replace("Bearer ", "");
 
-        const results: ScrapeResult[] = [];
-
-        // If specific platforms provided, use those; otherwise use active ones
-        const targetPlatforms = platforms
-            ? platforms.map((p) => getPlatformConfig(p)).filter(Boolean)
-            : getActivePlatforms();
-
-        for (const platformConfig of targetPlatforms) {
-            if (!platformConfig) continue;
-
-            if (results.length > 0) {
-                await new Promise((resolve) => setTimeout(resolve, 2000));
-            }
-
-            const result = await scrapePlatform(platformConfig.id, searchQuery);
-            results.push(result);
-            await logSync(result, searchQuery);
+        if (ingestSecret && providedSecret !== ingestSecret) {
+            return NextResponse.json(
+                { success: false, error: "Unauthorized - Invalid secret" },
+                { status: 401 }
+            );
         }
+
+        // Parse request body for custom parameters
+        const body = await request.json().catch(() => ({}));
+        const query = body.query || "iPhone";
+        const category = body.category; // Optional category filter
+
+        console.log(`🚀 [Manual] Starting advanced global sync for: "${query}"`);
+
+        // Initialize the orchestrator
+        const orchestrator = new SyncOrchestrator();
+
+        // Run the global sync
+        const result = await orchestrator.runGlobalSync(query, category);
+
+        const duration = Date.now() - startTime;
+
+        console.log("✅ [Manual] Global sync complete");
 
         return NextResponse.json({
             success: true,
-            query: searchQuery,
-            results: results.map((r) => ({
-                platform: r.platform,
-                status: r.status,
-                items_found: r.itemsFound,
-                duration_ms: r.requestDurationMs,
-                error: r.errorMessage,
-            })),
+            message: "Advanced scraper completed successfully",
+            query,
+            category: category || "all",
+            duration_ms: duration,
+            result,
         });
 
     } catch (error) {
+        const duration = Date.now() - startTime;
+        console.error("❌ [Manual] Fatal error:", error);
+
         return NextResponse.json(
-            { success: false, error: String(error) },
+            {
+                success: false,
+                error: "Manual scrape failed",
+                details: error instanceof Error ? error.message : String(error),
+                duration_ms: duration,
+            },
             { status: 500 }
         );
     }
