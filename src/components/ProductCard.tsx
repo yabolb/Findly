@@ -10,22 +10,44 @@ interface ProductCardProps {
     product: Product;
 }
 
-const PRICE_SCORE_CONFIG: Record<PriceScore & string, { label: string; color: string; dotColor: string; pulse?: boolean }> = {
+/**
+ * PRICE SCORE CONFIGURATION
+ * PRD Section 4.3: Price Intelligence
+ * 
+ * Colors (Casual-Tech Identity):
+ * - 🟢 Bargain (Green): >15% below median - emerald
+ * - 🟡 Fair Price (Yellow): Within ±15% range - amber
+ * - 🔴 Expensive (Red): >15% above median - rose
+ */
+const PRICE_SCORE_CONFIG: Record<PriceScore & string, {
+    label: string;
+    color: string;
+    dotColor: string;
+    borderGlow?: string;
+    pulse?: boolean;
+    icon?: string;
+}> = {
     bargain: {
         label: "Bargain",
-        color: "bg-emerald-100 text-emerald-700 border-emerald-200",
+        color: "bg-gradient-to-r from-emerald-50 to-green-50 text-emerald-700 border-emerald-300",
         dotColor: "bg-emerald-500",
-        pulse: true, // Enable pulse effect for bargains
+        borderGlow: "shadow-emerald-200",
+        pulse: true, // Eye-catching pulse for best deals
+        icon: "🟢",
     },
     fair: {
         label: "Fair Price",
-        color: "bg-slate-100 text-slate-600 border-slate-200",
-        dotColor: "bg-slate-400",
+        color: "bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 border-amber-300",
+        dotColor: "bg-amber-500",
+        borderGlow: "shadow-amber-100",
+        icon: "🟡",
     },
     expensive: {
-        label: "Market Price",
-        color: "bg-slate-100 text-slate-600 border-slate-200",
-        dotColor: "bg-slate-400",
+        label: "Above Market",
+        color: "bg-gradient-to-r from-rose-50 to-red-50 text-rose-700 border-rose-300",
+        dotColor: "bg-rose-500",
+        borderGlow: "shadow-rose-100",
+        icon: "🔴",
     },
 };
 

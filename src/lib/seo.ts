@@ -16,6 +16,8 @@ interface PageMetadata {
 /**
  * Generate dynamic page title based on search context
  * PRD Section 8: AISO Requirements
+ * 
+ * Format: "Best Second-hand [Product] Deals on Wallapop & Vinted | Findly"
  */
 export function generatePageTitle(params: {
     query?: string;
@@ -26,27 +28,27 @@ export function generatePageTitle(params: {
 
     // Searching with query
     if (query) {
-        let title = `Find ${query} second-hand`;
+        let title = `Best Second-hand ${query} Deals`;
         if (location) {
             title += ` in ${location}`;
         }
-        title += " on Wallapop, Vinted & more | Findly";
+        title += " on Wallapop & Vinted | Findly";
         return title;
     }
 
     // Browsing category
     if (category) {
         const categoryName = CATEGORY_LABELS[category];
-        let title = `${categoryName} Deals & Second-hand products`;
+        let title = `Best Second-hand ${categoryName} Deals`;
         if (location) {
             title += ` in ${location}`;
         }
-        title += " | Findly";
+        title += " on Wallapop & Vinted | Findly";
         return title;
     }
 
     // Default homepage
-    return "Findly – Find Amazing Deals on Second-Hand Products | Wallapop, Vinted & More";
+    return "Findly – Best Second-Hand Deals from Wallapop, Vinted, eBay & More";
 }
 
 /**
@@ -122,6 +124,7 @@ export function generateMetaKeywords(params: {
 
 /**
  * Generate complete page metadata
+ * Enhanced for OpenGraph with Bargain detection feature highlight
  */
 export function generatePageMetadata(params: {
     query?: string;
@@ -133,12 +136,23 @@ export function generatePageMetadata(params: {
     const description = generateMetaDescription(params);
     const keywords = generateMetaKeywords(params);
 
+    // Generate enhanced OpenGraph content that highlights Bargain detection
+    const ogTitle = params.query
+        ? `🔥 ${params.query} Deals with Automatic Bargain Detection | Findly`
+        : params.category
+            ? `🔥 ${CATEGORY_LABELS[params.category]} Deals with Bargain Alerts | Findly`
+            : "Findly – Smart Second-Hand Deal Finder with Price Intelligence";
+
+    const ogDescription = params.query || params.category
+        ? `Find the best ${params.query || CATEGORY_LABELS[params.category!].toLowerCase()} deals across Wallapop, Vinted & eBay. Our AI spots bargains automatically – look for the 🟢 green indicator to save up to 40% vs market prices!`
+        : "Stop searching – start finding. Findly aggregates second-hand deals from top marketplaces and uses Price Intelligence to flag the best bargains. 🟢 Green = 15%+ below market. Smart shopping, simplified.";
+
     return {
         title,
         description,
         keywords,
-        ogTitle: title,
-        ogDescription: description,
+        ogTitle,
+        ogDescription,
     };
 }
 

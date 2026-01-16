@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import SearchBar from "@/components/SearchBar";
 import ProductGrid from "@/components/ProductGrid";
 import CategoryBar from "@/components/CategoryBar";
+import StructuredData from "@/components/seo/StructuredData";
 import { Product, Category } from "@/types";
 import { fetchProducts } from "@/lib/product-service";
 import { useScrollPosition } from "@/hooks/useScrollPosition";
@@ -53,6 +54,13 @@ export default function Home() {
 
     return (
         <main className="min-h-screen">
+            {/* JSON-LD Structured Data for AISO (AI Search Optimization) */}
+            <StructuredData
+                products={products}
+                includeWebsite={true}
+                includeOrganization={true}
+            />
+
             {/* Hero Section */}
             <section className="pt-24 pb-8 px-6 lg:px-8">
                 <div className="max-w-5xl mx-auto text-center">

@@ -6,6 +6,7 @@ import { SlidersHorizontal } from "lucide-react";
 import ProductGrid from "@/components/ProductGrid";
 import FilterSidebar from "@/components/FilterSidebar";
 import SortDropdown from "@/components/SortDropdown";
+import StructuredData from "@/components/seo/StructuredData";
 import { Product, SearchFilters, SortOption, Category } from "@/types";
 import { ProductService } from "@/services/productService";
 
@@ -54,6 +55,15 @@ export default function SearchResultsPage() {
 
     return (
         <div className="min-h-screen bg-slate-50 pt-20">
+            {/* JSON-LD Structured Data for AISO (AI Search Optimization) */}
+            {!loading && products.length > 0 && (
+                <StructuredData
+                    products={products}
+                    query={filters.query}
+                    category={filters.category}
+                />
+            )}
+
             {/* Top Bar with Sort and Filter */}
             <div className="sticky top-20 z-30 bg-white/80 backdrop-blur-xl border-b border-slate-200 shadow-sm">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
