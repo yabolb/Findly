@@ -395,19 +395,20 @@ export class ProxyManager {
     async fetch(url: string, options: {
         preferredProvider?: 'webscrapingai' | 'scraperapi' | 'scrapingbee' | 'direct';
         requiresResidential?: boolean;
+        forceProxy?: boolean;
         renderJs?: boolean;
         countryCode?: string;
         waitFor?: string;
     } = {}): Promise<ProxyResponse> {
         const provider = options.preferredProvider || 'webscrapingai';
 
-        // If residential proxy is required (Wallapop, Vinted, Milanuncios)
-        if (options.requiresResidential) {
+        // If residential proxy is required OR proxy is forced
+        if (options.requiresResidential || options.forceProxy) {
             // Try WebScrapingAI first (best JS rendering + AI features)
             if (process.env.WEBSCRAPINGAI_API_KEY) {
                 const result = await this.webScrapingAI.fetch(url, {
                     renderJs: options.renderJs,
-                    useResidential: true,
+                    useResidential: options.requiresResidential, // Only use residential if specifically requested
                     countryCode: options.countryCode || 'es',
                     waitFor: options.waitFor,
                 });
@@ -419,7 +420,7 @@ export class ProxyManager {
             if (process.env.SCRAPERAPI_API_KEY) {
                 const result = await this.scraperAPI.fetch(url, {
                     renderJs: options.renderJs,
-                    useResidential: true,
+                    useResidential: options.requiresResidential,
                     countryCode: options.countryCode || 'es',
                 });
 
@@ -430,7 +431,7 @@ export class ProxyManager {
             if (process.env.SCRAPINGBEE_API_KEY) {
                 const result = await this.scrapingBee.fetch(url, {
                     renderJs: options.renderJs,
-                    premiumProxy: true,
+                    premiumProxy: options.requiresResidential,
                     countryCode: options.countryCode || 'es',
                     waitFor: options.waitFor,
                 });
@@ -440,7 +441,7 @@ export class ProxyManager {
             }
         }
 
-        // Direct fetch for platforms that don't require proxy
+        // Direct fetch for platforms that don't require proxy AND haven't forced it
         return this.directFetch.fetch(url);
     }
 

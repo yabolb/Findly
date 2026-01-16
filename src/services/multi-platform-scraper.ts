@@ -34,20 +34,23 @@ export class WallapopAdvancedScraper {
 
         try {
             // Build API URL with parameters
+            // Build Web URL (easier to scrape than API)
             const params = new URLSearchParams({
                 keywords: query,
-                latitude: "40.4168",  // Madrid coordinates
+                latitude: "40.4168",
                 longitude: "-3.7038",
-                distance: "200000",   // 200km radius
-                order_by: "newest",
+                filters_source: "search_box"
             });
 
-            const url = `${this.apiUrl}?${params.toString()}`;
+            // Switch to Web URL scraping which is often less protected than API v3
+            const url = `https://es.wallapop.com/app/search?${params.toString()}`;
 
-            // Fetch via residential proxy
+            // Fetch via residential proxy with JS rendering
             const response = await proxyManager.fetch(url, {
                 requiresResidential: true,
+                renderJs: true, // Wallapop web needs JS
                 countryCode: "es",
+                waitFor: ".ItemCardList__item", // Wait for items to load
             });
 
             const items: Product[] = [];
@@ -55,16 +58,11 @@ export class WallapopAdvancedScraper {
 
             if (response.success && response.statusCode === 200) {
                 try {
-                    const data = JSON.parse(response.body);
-                    const products = data.search_objects || data.items || [];
+                    // Try to extract from __NEXT_DATA__ or HTML structure
+                    // For now, simpler HTML parsing assuming JS rendered checks
+                    const products = this.parseWallapopHtml(response.body);
                     itemsFound = products.length;
-
-                    for (const item of products) {
-                        const product = this.parseWallapopItem(item);
-                        if (product) {
-                            items.push(product);
-                        }
-                    }
+                    items.push(...products);
                 } catch (parseError) {
                     console.error("[Wallapop] Failed to parse response:", parseError);
                 }
@@ -91,6 +89,33 @@ export class WallapopAdvancedScraper {
         } catch (error) {
             return this.createErrorResult(error, startTime);
         }
+    }
+
+    private parseWallapopHtml(html: string): Product[] {
+        const products: Product[] = [];
+        // Regex for the new Wallapop web structure (ItemCard)
+        const linkRegex = /href="(\/item\/[^"]+)"/g;
+        // This is a simplified fallback. In production, we'd use a robust parser.
+        // Wallapop web is complex SPA (Next.js). Best bet is extracting __NEXT_DATA__
+
+        try {
+            const nextDataRegex = /<script id="__NEXT_DATA__" type="application\/json">([\s\S]*?)<\/script>/;
+            const match = nextDataRegex.exec(html);
+            if (match && match[1]) {
+                const data = JSON.parse(match[1]);
+                const stateItems = data.props?.pageProps?.searchObjects || [];
+
+                for (const item of stateItems) {
+                    // Map API-like object from Next.js state
+                    const product = this.parseWallapopItem(item); // Reuse the item parser
+                    if (product) products.push(product);
+                }
+            }
+        } catch (e) {
+            console.error("[Wallapop] HTML parsing failed", e);
+        }
+
+        return products;
     }
 
     private parseWallapopItem(item: any): Product | null {
@@ -169,18 +194,18 @@ export class VintedAdvancedScraper {
         try {
             const params = new URLSearchParams({
                 search_text: query,
-                per_page: "50",
-                page: "1",
                 order: "newest_first",
             });
 
-            const url = `${this.apiUrl}?${params.toString()}`;
+            // Use Web URL instead of API
+            const url = `https://www.vinted.es/catalog?${params.toString()}`;
 
-            // Vinted requires premium residential proxy
+            // Vinted requires premium residential proxy & JS
             const response = await proxyManager.fetch(url, {
                 requiresResidential: true,
                 countryCode: "es",
-                renderJs: false,
+                renderJs: true,
+                waitFor: "[data-testid='grid-item']", // Wait for grid
             });
 
             const items: Product[] = [];
@@ -188,16 +213,9 @@ export class VintedAdvancedScraper {
 
             if (response.success && response.statusCode === 200) {
                 try {
-                    const data = JSON.parse(response.body);
-                    const products = data.items || [];
+                    const products = this.parseVintedHtml(response.body);
                     itemsFound = products.length;
-
-                    for (const item of products) {
-                        const product = this.parseVintedItem(item);
-                        if (product) {
-                            items.push(product);
-                        }
-                    }
+                    items.push(...products);
                 } catch (parseError) {
                     console.error("[Vinted] Failed to parse response:", parseError);
                 }
@@ -224,6 +242,63 @@ export class VintedAdvancedScraper {
         } catch (error) {
             return this.createErrorResult(error, startTime);
         }
+    }
+
+    private parseVintedHtml(html: string): Product[] {
+        const products: Product[] = [];
+        const seenIds = new Set<string>();
+
+        // Regex to find product links in Vinted feed
+        // Matches: href="/items/12345678-title-of-item"
+        const linkRegex = /href="(\/items\/(\d+)-[^"]+)"/g;
+
+        let match;
+        while ((match = linkRegex.exec(html)) !== null) {
+            const relativeUrl = match[1];
+            const id = match[2];
+
+            if (seenIds.has(id)) continue;
+            seenIds.add(id);
+
+            // Extract title from URL (fallback)
+            const slugTitle = relativeUrl.split("-").slice(1).join(" ").replace(/\//g, "");
+
+            // Try to find price in a window around the link match
+            const windowSize = 300;
+            const context = html.substring(Math.max(0, match.index - windowSize), Math.min(html.length, match.index + windowSize));
+
+            // Price regex: "10,00 €" or "10.00 €" or "€10.00"
+            const priceRegex = /([0-9]+[.,][0-9]+)\s?€/i;
+            const priceMatch = priceRegex.exec(context);
+
+            let price = 0;
+            if (priceMatch) {
+                // Normalize price found
+                price = parseFloat(priceMatch[1].replace(',', '.'));
+            }
+
+            // Only add if we have at least ID and Title
+            if (id && slugTitle) {
+                products.push({
+                    id: id,
+                    title: slugTitle || `Vinted Item ${id}`,
+                    description: "",
+                    price: price, // May be 0, trust engine will handle
+                    currency: "EUR",
+                    image_url: "", // Detailed scraping needed for image
+                    source_url: `https://www.vinted.es${relativeUrl}`,
+                    platform: "vinted",
+                    category: "others",
+                    location: "España",
+                    condition: "good",
+                    phash: null,
+                    price_score: null,
+                    created_at: new Date(),
+                });
+            }
+        }
+
+        return products.slice(0, 20);
     }
 
     private parseVintedItem(item: any): Product | null {
@@ -384,9 +459,12 @@ export class EbayAdvancedScraper {
         try {
             const url = buildSearchUrl("ebay", query);
 
-            // eBay usually doesn't require proxy
+            // eBay usually doesn't require proxy, BUT Vercel/Cloud IPs are blocked.
+            // Force ScraperAPI which is often cleaner for eBay
             const response = await proxyManager.fetch(url, {
                 requiresResidential: false,
+                forceProxy: true,
+                preferredProvider: "scraperapi",
                 countryCode: "es",
             });
 

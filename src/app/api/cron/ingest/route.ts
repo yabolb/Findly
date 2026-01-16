@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { SyncOrchestrator } from "@/services/sync-orchestrator";
+import { Platform } from "@/types";
 
 /**
  * AUTOMATED CRON INGESTION - ADVANCED SCRAPER
@@ -10,14 +11,14 @@ import { SyncOrchestrator } from "@/services/sync-orchestrator";
  * - Trust Engine (price scoring, spam filtering)
  * - Deduplication Engine (URL + title similarity)
  * - Bulk upsert to Supabase
- * 
+ *
  * Endpoint: POST/GET /api/cron/ingest
  * Security: Requires INGEST_SECRET_KEY for authentication
- * 
- * Trigger via:
- * - Vercel Cron Jobs (automated)
- * - Manual API call (for testing)
  */
+
+// Allow up to 60 seconds (Hobby limit) or 300 seconds (Pro)
+export const maxDuration = 60;
+export const dynamic = 'force-dynamic';
 
 /**
  * GET /api/cron/ingest
@@ -62,15 +63,24 @@ export async function GET(request: NextRequest) {
             const eveningQueries = ["Sofá", "Nike", "Bicicleta", "Coche"];
             query = eveningQueries[Math.floor(Math.random() * eveningQueries.length)];
         }
-        // Fallback (shouldn't happen with 6,18 schedule, but just in case)
+        // Fallback
         else {
             query = "iPhone";
         }
 
-        console.log(`📝 [Cron] Search query: "${query}" (${hour}:00 UTC)`);
+        // STRATEGY: Pick ONE random platform to avoid Vercel Timeouts (10-60s limit)
+        // We rotate platforms naturally across cron runs
+        const platforms: Platform[] = ["wallapop", "vinted", "ebay", "milanuncios"];
+        // Weighted selection? No, just random for now.
+        const targetPlatform = platforms[Math.floor(Math.random() * platforms.length)];
 
-        // Run the global sync
-        const result = await orchestrator.runGlobalSync(query);
+        console.log(`📝 [Cron] Query: "${query}" | Platform: ${targetPlatform} (${hour}:00 UTC)`);
+
+        // Run the sync for specific platform
+        const result = await orchestrator.runGlobalSync(query, undefined, {
+            platforms: [targetPlatform],
+            skipBannedPlatforms: true
+        });
 
         const duration = Date.now() - startTime;
 
@@ -80,6 +90,7 @@ export async function GET(request: NextRequest) {
             success: true,
             message: "Advanced scraper completed successfully",
             query,
+            targetPlatform,
             duration_ms: duration,
             result,
         });
@@ -102,63 +113,8 @@ export async function GET(request: NextRequest) {
 
 /**
  * POST /api/cron/ingest
- * Manual trigger with custom parameters
+ * Manual trigger (same logic as GET)
  */
 export async function POST(request: NextRequest) {
-    const startTime = Date.now();
-
-    try {
-        // Validate authentication
-        const authHeader = request.headers.get("Authorization");
-        const ingestSecret = process.env.INGEST_SECRET_KEY;
-
-        const providedSecret = authHeader?.replace("Bearer ", "");
-
-        if (ingestSecret && providedSecret !== ingestSecret) {
-            return NextResponse.json(
-                { success: false, error: "Unauthorized - Invalid secret" },
-                { status: 401 }
-            );
-        }
-
-        // Parse request body for custom parameters
-        const body = await request.json().catch(() => ({}));
-        const query = body.query || "iPhone";
-        const category = body.category; // Optional category filter
-
-        console.log(`🚀 [Manual] Starting advanced global sync for: "${query}"`);
-
-        // Initialize the orchestrator
-        const orchestrator = new SyncOrchestrator();
-
-        // Run the global sync
-        const result = await orchestrator.runGlobalSync(query, category);
-
-        const duration = Date.now() - startTime;
-
-        console.log("✅ [Manual] Global sync complete");
-
-        return NextResponse.json({
-            success: true,
-            message: "Advanced scraper completed successfully",
-            query,
-            category: category || "all",
-            duration_ms: duration,
-            result,
-        });
-
-    } catch (error) {
-        const duration = Date.now() - startTime;
-        console.error("❌ [Manual] Fatal error:", error);
-
-        return NextResponse.json(
-            {
-                success: false,
-                error: "Manual scrape failed",
-                details: error instanceof Error ? error.message : String(error),
-                duration_ms: duration,
-            },
-            { status: 500 }
-        );
-    }
+    return GET(request);
 }
