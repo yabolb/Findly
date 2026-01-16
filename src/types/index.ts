@@ -1,19 +1,48 @@
-// Product from marketplace listings
+// ========================================
+// FINDLY - TYPE DEFINITIONS (PRD-Aligned)
+// ========================================
+
+// 13 Core Categories from PRD
+export type Category =
+    | "cars-motorcycles"
+    | "fashion"
+    | "real-estate"
+    | "tech-electronics"
+    | "sports-leisure"
+    | "home-garden"
+    | "movies-books-music"
+    | "baby-kids"
+    | "collectibles-art"
+    | "diy"
+    | "agriculture-industrial"
+    | "services"
+    | "others";
+
+// Product Condition
+export type ProductCondition = "new" | "like-new" | "good" | "fair" | "poor";
+
+// Platform Sources
+export type Platform = "wallapop" | "vinted" | "ebay" | "milanuncios";
+
+// Price Score (Trust Engine)
+export type PriceScore = "bargain" | "fair" | "expensive" | null;
+
+// Product from marketplace listings (PRD Database Schema)
 export interface Product {
     id: string;
     title: string;
     description: string;
     price: number;
-    currency: string;
-    condition: "new" | "like-new" | "good" | "fair";
-    category: string;
-    images: string[];
-    location: Location;
-    seller: Seller;
-    source: "wallapop" | "vinted" | "milanuncios" | "manual";
-    externalUrl?: string;
-    createdAt: Date;
-    updatedAt: Date;
+    currency: string; // default 'EUR'
+    image_url: string;
+    source_url: string; // unique external URL
+    platform: Platform;
+    category: Category;
+    location: string;
+    condition: ProductCondition;
+    phash: string | null; // Perceptual hash for de-duplication
+    price_score: PriceScore; // Bargain/Fair/Expensive indicator
+    created_at: Date;
 }
 
 // Geographic location
@@ -37,26 +66,27 @@ export interface Seller {
     verified: boolean;
 }
 
-// Category structure
-export interface Category {
-    id: string;
+// Category structure (for navigation)
+export interface CategoryItem {
+    id: Category;
     name: string;
     slug: string;
     icon?: string;
     parentId?: string;
-    subcategories?: Category[];
+    subcategories?: CategoryItem[];
 }
 
 // Search filters
 export interface SearchFilters {
     query?: string;
-    category?: string;
+    category?: Category;
     minPrice?: number;
     maxPrice?: number;
-    condition?: Product["condition"][];
+    condition?: ProductCondition[];
     location?: string;
     radius?: number; // in kilometers
-    source?: Product["source"][];
+    platform?: Platform[];
+    priceScore?: PriceScore[];
 }
 
 // Paginated response
@@ -69,3 +99,20 @@ export interface PaginatedResponse<T> {
         totalPages: number;
     };
 }
+
+// Category Mapping (for display)
+export const CATEGORY_LABELS: Record<Category, string> = {
+    "cars-motorcycles": "Cars & Motorcycles",
+    fashion: "Fashion",
+    "real-estate": "Real Estate",
+    "tech-electronics": "Tech & Electronics",
+    "sports-leisure": "Sports & Leisure",
+    "home-garden": "Home & Garden",
+    "movies-books-music": "Movies, Books & Music",
+    "baby-kids": "Baby & Kids",
+    "collectibles-art": "Collectibles & Art",
+    diy: "DIY",
+    "agriculture-industrial": "Agriculture & Industrial",
+    services: "Services",
+    others: "Others",
+};

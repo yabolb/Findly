@@ -2,46 +2,46 @@
 
 import Link from "next/link";
 import { Search } from "lucide-react";
-import { useState, useEffect } from "react";
+import SearchBar from "./SearchBar";
+import { useScrollPosition } from "@/hooks/useScrollPosition";
 
-export default function Navbar() {
-    const [isScrolled, setIsScrolled] = useState(false);
+interface NavbarProps {
+    onSearch?: (query: string, category: string, location: string) => void;
+}
 
-    // Handle scroll effect with proper cleanup
-    useEffect(() => {
-        const handleScroll = () => {
-            setIsScrolled(window.scrollY > 10);
-        };
-
-        window.addEventListener("scroll", handleScroll);
-
-        // Cleanup function to prevent memory leaks
-        return () => {
-            window.removeEventListener("scroll", handleScroll);
-        };
-    }, []); // Empty dependency array - run once on mount
+export default function Navbar({ onSearch }: NavbarProps) {
+    const { scrollY, isScrolled: isSearchVisible } = useScrollPosition();
+    const isNavBackgroundVisible = scrollY > 10;
 
     return (
         <nav
-            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled
-                ? "bg-white/80 backdrop-blur-md shadow-sm"
+            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isNavBackgroundVisible
+                ? "bg-white/90 backdrop-blur-md shadow-sm border-b border-gray-100/50"
                 : "bg-transparent"
                 }`}
         >
             <div className="max-w-7xl mx-auto px-6 lg:px-8">
                 <div className="flex items-center justify-between h-20">
                     {/* Logo */}
-                    <Link href="/" className="flex items-center gap-2 group">
-                        <div className="w-10 h-10 bg-primary rounded-2xl flex items-center justify-center transform transition-transform group-hover:scale-105">
+                    <Link href="/" className="flex items-center gap-2 group flex-shrink-0">
+                        <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center transform transition-transform group-hover:scale-105 shadow-sm">
                             <Search className="w-5 h-5 text-white" />
                         </div>
-                        <span className="font-heading text-2xl font-bold text-text-main">
+                        <span className="font-heading text-2xl font-bold text-text-main hidden sm:block">
                             Findly
                         </span>
                     </Link>
 
+                    {/* Sticky Search Bar - Appears on Scroll */}
+                    <div className={`hidden md:block flex-1 max-w-xl mx-8 transition-all duration-300 ${isSearchVisible
+                        ? "opacity-100 translate-y-0"
+                        : "opacity-0 -translate-y-4 pointer-events-none"
+                        }`}>
+                        <SearchBar onSearch={onSearch} compact />
+                    </div>
+
                     {/* Navigation Links */}
-                    <div className="hidden md:flex items-center gap-8">
+                    <div className="hidden md:flex items-center gap-8 flex-shrink-0">
                         <Link
                             href="/categories"
                             className="text-text-main/70 hover:text-primary font-medium transition-colors duration-200 relative group"
@@ -59,7 +59,7 @@ export default function Navbar() {
                     </div>
 
                     {/* Mobile Menu Button */}
-                    <button className="md:hidden p-2 rounded-xl hover:bg-primary/10 transition-colors">
+                    <button className="md:hidden p-2 rounded-xl hover:bg-primary/10 transition-colors ml-auto">
                         <svg
                             className="w-6 h-6 text-text-main"
                             fill="none"

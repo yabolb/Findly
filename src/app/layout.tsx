@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import Navbar from "@/components/Navbar";
+import "./globals.css";
 
 export const metadata: Metadata = {
     title: "Findly - Find everything. Second-hand.",
@@ -15,7 +15,6 @@ export default function RootLayout({
     return (
         <html lang="en">
             <body className="bg-background min-h-screen">
-                <Navbar />
                 {children}
             </body>
         </html>
