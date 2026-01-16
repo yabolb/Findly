@@ -7,6 +7,7 @@ import SearchBar from "@/components/SearchBar";
 import ProductGrid from "@/components/ProductGrid";
 import CategoryBar from "@/components/CategoryBar";
 import StructuredData from "@/components/seo/StructuredData";
+import Leaderboard from "@/components/ads/Leaderboard";
 import { Product, Category } from "@/types";
 import { fetchProducts } from "@/lib/product-service";
 import { useScrollPosition } from "@/hooks/useScrollPosition";
@@ -98,6 +99,9 @@ export default function Home() {
                 selectedCategory="all"
                 onCategorySelect={handleCategorySelect}
             />
+
+            {/* Leaderboard Ad */}
+            <Leaderboard />
 
             {/* Trending Section */}
             <section className="pb-20 px-6 lg:px-8 mt-6">
