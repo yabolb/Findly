@@ -2,24 +2,21 @@
 
 import { TrendingUp } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import SearchBar from "@/components/SearchBar";
 import ProductGrid from "@/components/ProductGrid";
-import ZeroResults from "@/components/ZeroResults";
 import CategoryBar from "@/components/CategoryBar";
-import Navbar from "@/components/Navbar";
 import { Product, Category } from "@/types";
 import { fetchProducts } from "@/lib/product-service";
 import { useScrollPosition } from "@/hooks/useScrollPosition";
 
 export default function Home() {
+    const router = useRouter();
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
-    const [searchQuery, setSearchQuery] = useState("");
-    const [hasSearched, setHasSearched] = useState(false);
-    const [selectedCategory, setSelectedCategory] = useState<Category | "all">("all");
     const { isScrolled } = useScrollPosition();
 
-    // Load initial "Trending Bargains" on mount
+    // Load "Trending Bargains" on mount
     useEffect(() => {
         loadTrendingBargains();
     }, []);
@@ -38,63 +35,24 @@ export default function Home() {
         }
     };
 
-    const loadProducts = async (query?: string, category?: string, location?: string) => {
-        setLoading(true);
-        try {
-            const filters: any = {};
-
-            if (query) filters.query = query;
-            if (category && category !== "all") filters.category = category as Category;
-            if (location) filters.location = location;
-
-            const data = await fetchProducts(Object.keys(filters).length > 0 ? filters : undefined);
-            setProducts(data);
-        } catch (error) {
-            console.error("Failed to load products:", error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
     const handleSearch = (query: string, category: string, location: string) => {
-        console.log("🔍 Search initiated:");
-        console.log("  Query:", query);
-        console.log("  Category:", category);
-        console.log("  Location:", location);
-
-        setSearchQuery(query);
-        setHasSearched(true);
-        setSelectedCategory(category as Category || "all");
-        loadProducts(query, category, location);
+        const params = new URLSearchParams();
+        if (query) params.set("q", query);
+        if (category && category !== "all") params.set("category", category);
+        if (location) params.set("location", location);
+        router.push(`/search?${params.toString()}`);
     };
 
-    const handleCategorySelect = async (category: Category | "all") => {
-        setSelectedCategory(category);
-
-        if (!hasSearched) {
-            // In discovery mode, filter bargains by category
-            setLoading(true);
-            try {
-                const data = await fetchProducts(
-                    category !== "all" ? { category: category as Category } : undefined
-                );
-                const bargains = data.filter(product => product.price_score === "bargain");
-                setProducts(bargains);
-            } catch (error) {
-                console.error("Failed to filter bargains:", error);
-            } finally {
-                setLoading(false);
-            }
+    const handleCategorySelect = (category: Category | "all") => {
+        if (category === "all") {
+            router.push("/search");
         } else {
-            // In search mode, filter search results by category
-            loadProducts(searchQuery, category !== "all" ? category : undefined);
+            router.push(`/search?category=${category}`);
         }
     };
 
     return (
         <main className="min-h-screen">
-            <Navbar onSearch={handleSearch} />
-
             {/* Hero Section */}
             <section className="pt-24 pb-8 px-6 lg:px-8">
                 <div className="max-w-5xl mx-auto text-center">
@@ -129,26 +87,20 @@ export default function Home() {
 
             {/* Category Quick-Links Bar */}
             <CategoryBar
-                selectedCategory={selectedCategory}
+                selectedCategory="all"
                 onCategorySelect={handleCategorySelect}
             />
 
-            {/* Results Section - Always visible with Discovery/Search modes */}
+            {/* Trending Section */}
             <section className="pb-20 px-6 lg:px-8 mt-6">
                 <div className="max-w-7xl mx-auto">
                     {/* Section Title */}
                     <div className="mb-6">
                         <h2 className="font-heading text-2xl md:text-3xl font-bold text-text-main mb-2">
-                            {hasSearched
-                                ? `Results for "${searchQuery}"`
-                                : "🔥 Trending Bargains"
-                            }
+                            🔥 Trending Bargains
                         </h2>
                         <p className="text-slate-600">
-                            {hasSearched
-                                ? "Based on your search criteria"
-                                : "The best deals on the market right now"
-                            }
+                            The best deals on the market right now
                         </p>
                     </div>
 
@@ -157,19 +109,15 @@ export default function Home() {
                         <div className="text-center py-20">
                             <div className="inline-block w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
                             <p className="text-slate-600">
-                                {hasSearched ? "Searching for products..." : "Loading trending bargains..."}
+                                Loading trending bargains...
                             </p>
                         </div>
-                    ) : products.length > 0 ? (
+                    ) : (
                         // Products Grid
                         <ProductGrid products={products} />
-                    ) : (
-                        // Zero Results
-                        <ZeroResults query={searchQuery || "bargains"} />
                     )}
                 </div>
             </section>
-
         </main>
     );
 }

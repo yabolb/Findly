@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Search } from "lucide-react";
 import SearchBar from "./SearchBar";
@@ -10,8 +11,22 @@ interface NavbarProps {
 }
 
 export default function Navbar({ onSearch }: NavbarProps) {
+    const router = useRouter();
     const { scrollY, isScrolled: isSearchVisible } = useScrollPosition();
     const isNavBackgroundVisible = scrollY > 10;
+
+    const handleSearch = (query: string, category: string, location: string) => {
+        if (onSearch) {
+            onSearch(query, category, location);
+        } else {
+            // Default global search behavior: redirect to /search
+            const params = new URLSearchParams();
+            if (query) params.set("q", query);
+            if (category && category !== "all") params.set("category", category);
+            if (location) params.set("location", location);
+            router.push(`/search?${params.toString()}`);
+        }
+    };
 
     return (
         <nav
@@ -37,7 +52,7 @@ export default function Navbar({ onSearch }: NavbarProps) {
                         ? "opacity-100 translate-y-0"
                         : "opacity-0 -translate-y-4 pointer-events-none"
                         }`}>
-                        <SearchBar onSearch={onSearch} compact />
+                        <SearchBar onSearch={handleSearch} compact />
                     </div>
 
                     {/* Navigation Links */}
