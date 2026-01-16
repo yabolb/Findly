@@ -1,125 +1,120 @@
 import { supabase } from "./supabase";
 import { Product, SearchFilters } from "@/types";
-import { MOCK_PRODUCTS } from "./mock-data";
 
 /**
- * Fetch products from Supabase with optional filters
- * Falls back to mock data if database is empty
+ * Fetch products from Supabase with intelligent demo product mixing
+ * Strategy: Fetch real products first, backfill with demo if insufficient
  */
 export async function fetchProducts(filters?: SearchFilters): Promise<Product[]> {
     try {
-        let query = supabase.from("products").select("*");
+        // First, try to fetch real products (is_demo = false)
+        let realQuery = supabase.from("products").select("*").eq("is_demo", false);
 
-        // Apply filters if provided
-        if (filters) {
-            if (filters.query) {
-                // Full-text search on title and description
-                query = query.or(`title.ilike.%${filters.query}%,description.ilike.%${filters.query}%`);
-            }
+        // Apply filters
+        realQuery = applyFiltersToQuery(realQuery, filters);
+        realQuery = realQuery.order("created_at", { ascending: false });
 
-            if (filters.category) {
-                query = query.eq("category", filters.category);
-            }
+        const { data: realProducts, error: realError } = await realQuery;
 
-            if (filters.minPrice !== undefined) {
-                query = query.gte("price", filters.minPrice);
-            }
-
-            if (filters.maxPrice !== undefined) {
-                query = query.lte("price", filters.maxPrice);
-            }
-
-            if (filters.location) {
-                query = query.ilike("location", `%${filters.location}%`);
-            }
-
-            if (filters.condition && filters.condition.length > 0) {
-                query = query.in("condition", filters.condition);
-            }
-
-            if (filters.platform && filters.platform.length > 0) {
-                query = query.in("platform", filters.platform);
-            }
-
-            if (filters.priceScore && filters.priceScore.length > 0) {
-                query = query.in("price_score", filters.priceScore);
-            }
+        if (realError) {
+            console.error("Supabase query error (real products):", realError);
         }
 
-        // Order by most recent first
-        query = query.order("created_at", { ascending: false });
+        const realCount = realProducts?.length || 0;
+        const minProductsThreshold = 20;
 
-        const { data, error } = await query;
-
-        if (error) {
-            console.error("Supabase query error:", error);
-            // Fall back to mock data on error
-            return applyMockFilters(MOCK_PRODUCTS, filters);
+        // If we have enough real products, return them
+        if (realCount >= minProductsThreshold) {
+            console.log(`✅ Fetched ${realCount} real products`);
+            return convertProducts(realProducts || []);
         }
 
-        // If database is empty, use mock data
-        if (!data || data.length === 0) {
-            console.log("📦 Database empty - using mock data");
-            return applyMockFilters(MOCK_PRODUCTS, filters);
+        // Otherwise, fetch demo products to backfill
+        console.log(`📦 Only ${realCount} real products - backfilling with demo products`);
+
+        let demoQuery = supabase.from("products").select("*").eq("is_demo", true);
+        demoQuery = applyFiltersToQuery(demoQuery, filters);
+        demoQuery = demoQuery.order("created_at", { ascending: false });
+        demoQuery = demoQuery.limit(minProductsThreshold - realCount);
+
+        const { data: demoProducts, error: demoError } = await demoQuery;
+
+        if (demoError) {
+            console.error("Supabase query error (demo products):", demoError);
         }
 
-        // Convert created_at strings to Date objects
-        return data.map((product) => ({
-            ...product,
-            created_at: new Date(product.created_at),
-        }));
+        // Combine real and demo products
+        const combined = [...(realProducts || []), ...(demoProducts || [])];
+        console.log(`📊 Mixed results: ${realCount} real + ${demoProducts?.length || 0} demo`);
+
+        return convertProducts(combined);
+
     } catch (error) {
         console.error("Failed to fetch products:", error);
-        // Fall back to mock data on error
-        return applyMockFilters(MOCK_PRODUCTS, filters);
+
+        // Last resort: fetch any products (demo or real)
+        try {
+            const { data } = await supabase
+                .from("products")
+                .select("*")
+                .order("created_at", { ascending: false })
+                .limit(20);
+
+            return convertProducts(data || []);
+        } catch {
+            return [];
+        }
     }
 }
 
 /**
- * Apply filters to mock data (used when database is empty or unavailable)
+ * Apply filters to a Supabase query
  */
-function applyMockFilters(products: Product[], filters?: SearchFilters): Product[] {
-    if (!filters) return products;
-
-    let filtered = [...products];
+function applyFiltersToQuery(query: any, filters?: SearchFilters) {
+    if (!filters) return query;
 
     if (filters.query) {
-        const query = filters.query.toLowerCase();
-        filtered = filtered.filter(
-            (p) =>
-                p.title.toLowerCase().includes(query) ||
-                p.description.toLowerCase().includes(query)
-        );
+        // Full-text search on title and description
+        query = query.or(`title.ilike.%${filters.query}%,description.ilike.%${filters.query}%`);
     }
 
     if (filters.category) {
-        filtered = filtered.filter((p) => p.category === filters.category);
+        query = query.eq("category", filters.category);
     }
 
     if (filters.minPrice !== undefined) {
-        filtered = filtered.filter((p) => p.price >= filters.minPrice!);
+        query = query.gte("price", filters.minPrice);
     }
 
     if (filters.maxPrice !== undefined) {
-        filtered = filtered.filter((p) => p.price <= filters.maxPrice!);
+        query = query.lte("price", filters.maxPrice);
     }
 
     if (filters.location) {
-        const location = filters.location.toLowerCase();
-        filtered = filtered.filter((p) => p.location.toLowerCase().includes(location));
+        query = query.ilike("location", `%${filters.location}%`);
     }
 
     if (filters.condition && filters.condition.length > 0) {
-        filtered = filtered.filter((p) => filters.condition!.includes(p.condition));
+        query = query.in("condition", filters.condition);
     }
 
     if (filters.platform && filters.platform.length > 0) {
-        filtered = filtered.filter((p) => filters.platform!.includes(p.platform));
+        query = query.in("platform", filters.platform);
     }
 
     if (filters.priceScore && filters.priceScore.length > 0) {
-        filtered = filtered.filter((p) => p.price_score && filters.priceScore!.includes(p.price_score));
+        query = query.in("price_score", filters.priceScore);
     }
 
-    return filtered;
+    return query;
+}
+
+/**
+ * Convert database products to Product type with proper date handling
+ */
+function convertProducts(data: any[]): Product[] {
+    return data.map((product) => ({
+        ...product,
+        created_at: new Date(product.created_at),
+    }));
 }
