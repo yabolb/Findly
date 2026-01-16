@@ -40,11 +40,23 @@ export async function generateMetadata({ searchParams }: SearchPageProps): Promi
             description: metadata.ogDescription || metadata.description,
             type: "website",
             url: canonical,
+            siteName: "Findly",
+            locale: "en_US",
+            images: [
+                {
+                    url: `${baseUrl}/og-image.png`, // TODO: Create OG image
+                    width: 1200,
+                    height: 630,
+                    alt: metadata.title,
+                },
+            ],
         },
         twitter: {
             card: "summary_large_image",
             title: metadata.ogTitle || metadata.title,
             description: metadata.ogDescription || metadata.description,
+            site: "@findly", // TODO: Update with actual Twitter handle
+            images: [`${baseUrl}/og-image.png`],
         },
     };
 }

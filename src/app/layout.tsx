@@ -1,8 +1,24 @@
 import type { Metadata } from "next";
+import { Plus_Jakarta_Sans, Inter } from 'next/font/google';
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import ConsentManager from "@/components/layout/ConsentManager";
 import Footer from "@/components/layout/Footer";
+
+// Optimized font loading with next/font
+const plusJakartaSans = Plus_Jakarta_Sans({
+    subsets: ['latin'],
+    weight: ['400', '500', '600', '700', '800'],
+    variable: '--font-heading',
+    display: 'swap',
+});
+
+const inter = Inter({
+    subsets: ['latin'],
+    weight: ['300', '400', '500', '600', '700'],
+    variable: '--font-body',
+    display: 'swap',
+});
 
 export const metadata: Metadata = {
     title: "Findly - Find everything. Second-hand.",
@@ -16,8 +32,8 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="en" suppressHydrationWarning>
-            <body className="bg-background min-h-screen flex flex-col" suppressHydrationWarning>
+        <html lang="en" suppressHydrationWarning className={`${plusJakartaSans.variable} ${inter.variable}`}>
+            <body className={`${inter.className} bg-background min-h-screen flex flex-col`} suppressHydrationWarning>
                 {/* GDPR Consent Management */}
                 <ConsentManager />
 

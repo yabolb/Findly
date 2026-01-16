@@ -93,13 +93,7 @@ function LoginForm() {
                                 id="password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="
-                                    w-full px-4 py-3 rounded-xl border border-slate-300
-                                    focus:ring-2 focus:ring-violet-500 focus:border-transparent
-                                    transition-all duration-200
-                                    text-slate-900 placeholder-slate-400
-                                    bg-white
-                                "
+                                className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all duration-200 text-slate-900 placeholder-slate-400 bg-white"
                                 placeholder="Enter admin password"
                                 required
                                 disabled={isLoading}
@@ -122,16 +116,7 @@ function LoginForm() {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="
-                                w-full py-3 px-6 rounded-xl
-                                bg-gradient-to-r from-violet-600 to-indigo-600
-                                text-white font-semibold
-                                hover:from-violet-700 hover:to-indigo-700
-                                focus:ring-4 focus:ring-violet-500/50
-                                transition-all duration-200
-                                disabled:opacity-50 disabled:cursor-not-allowed
-                                flex items-center justify-center gap-2
-                            "
+                            className="w-full py-3 px-6 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-semibold hover:from-violet-700 hover:to-indigo-700 focus:ring-4 focus:ring-violet-500/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
                             {isLoading ? (
                                 <>
@@ -186,33 +171,6 @@ function LoginForm() {
                     </div>
                 </div>
             </motion.div>
-
-            {/* Custom Animation Styles */}
-            <style jsx global>{`
-                @keyframes blob {
-                    0% {
-                        transform: translate(0px, 0px) scale(1);
-                    }
-                    33% {
-                        transform: translate(30px, -50px) scale(1.1);
-                    }
-                    66% {
-                        transform: translate(-20px, 20px) scale(0.9);
-                    }
-                    100% {
-                        transform: translate(0px, 0px) scale(1);
-                    }
-                }
-                .animate-blob {
-                    animation: blob 7s infinite;
-                }
-                .animation-delay-2000 {
-                    animation-delay: 2s;
-                }
-                .animation-delay-4000 {
-                    animation-delay: 4s;
-                }
-            `}</style>
         </div>
     );
 }
