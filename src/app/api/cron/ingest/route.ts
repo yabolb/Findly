@@ -48,18 +48,26 @@ export async function GET(request: NextRequest) {
         // Initialize the orchestrator
         const orchestrator = new SyncOrchestrator();
 
-        // Default search query (can be randomized for variety)
-        const queries = [
-            "iPhone",
-            "MacBook",
-            "PlayStation",
-            "Nike Air Max",
-            "Bicicleta",
-            "Sofá",
-        ];
-        const query = queries[Math.floor(Math.random() * queries.length)];
+        // Smart query selection based on time
+        const hour = new Date().getUTCHours();
+        let query: string;
 
-        console.log(`📝 [Cron] Search query: "${query}"`);
+        // Morning run (6am UTC = 7am Spain): Tech & Electronics
+        if (hour >= 6 && hour < 12) {
+            const morningQueries = ["iPhone", "MacBook", "iPad", "Samsung Galaxy"];
+            query = morningQueries[Math.floor(Math.random() * morningQueries.length)];
+        }
+        // Evening run (6pm UTC = 7pm Spain): Home, Fashion & Vehicles
+        else if (hour >= 18 && hour < 24) {
+            const eveningQueries = ["Sofá", "Nike", "Bicicleta", "Coche"];
+            query = eveningQueries[Math.floor(Math.random() * eveningQueries.length)];
+        }
+        // Fallback (shouldn't happen with 6,18 schedule, but just in case)
+        else {
+            query = "iPhone";
+        }
+
+        console.log(`📝 [Cron] Search query: "${query}" (${hour}:00 UTC)`);
 
         // Run the global sync
         const result = await orchestrator.runGlobalSync(query);
