@@ -27,6 +27,44 @@ export type Platform = "wallapop" | "vinted" | "ebay" | "milanuncios";
 // Price Score (Trust Engine)
 export type PriceScore = "bargain" | "fair" | "expensive" | null;
 
+// ============================================
+// SYNC LOGS (Scraper Health Monitoring)
+// ============================================
+
+// Sync status types
+export type SyncStatus = "success" | "error" | "banned" | "suspicious" | "timeout";
+
+// Sync log entry
+export interface SyncLog {
+    id: string;
+    platform: Platform;
+    status: SyncStatus;
+    error_code: number | null;
+    error_message: string | null;
+    items_found: number;
+    items_inserted: number;
+    items_updated: number;
+    search_query: string | null;
+    request_duration_ms: number | null;
+    ban_reason: string | null;
+    created_at: Date;
+}
+
+// Platform health statistics
+export interface PlatformHealth {
+    platform: Platform;
+    totalSyncs: number;
+    successCount: number;
+    errorCount: number;
+    bannedCount: number;
+    suspiciousCount: number;
+    successRate: number;
+    totalItemsFound: number;
+    lastSyncAt: Date | null;
+    lastStatus: SyncStatus | null;
+    isHealthy: boolean;
+}
+
 // Product from marketplace listings (PRD Database Schema)
 export interface Product {
     id: string;
