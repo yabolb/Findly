@@ -1,8 +1,8 @@
 "use client";
 
-import { Product, PriceScore } from "@/types";
-import { PLATFORM_LOGOS } from "@/lib/mock-data";
-import { ExternalLink } from "lucide-react";
+import { Product } from "@/types";
+import { PLATFORM_LOGOS, PLATFORM_NAMES } from "@/lib/mock-data";
+import { ExternalLink, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { motion } from "framer-motion";
 
@@ -10,50 +10,8 @@ interface ProductCardProps {
     product: Product;
 }
 
-/**
- * PRICE SCORE CONFIGURATION
- * PRD Section 4.3: Price Intelligence
- * 
- * Colors (Casual-Tech Identity):
- * - 🟢 Bargain (Green): >15% below median - emerald
- * - 🟡 Fair Price (Yellow): Within ±15% range - amber
- * - 🔴 Expensive (Red): >15% above median - rose
- */
-const PRICE_SCORE_CONFIG: Record<PriceScore & string, {
-    label: string;
-    color: string;
-    dotColor: string;
-    borderGlow?: string;
-    pulse?: boolean;
-    icon?: string;
-}> = {
-    bargain: {
-        label: "Bargain",
-        color: "bg-gradient-to-r from-emerald-50 to-green-50 text-emerald-700 border-emerald-300",
-        dotColor: "bg-emerald-500",
-        borderGlow: "shadow-emerald-200",
-        pulse: true, // Eye-catching pulse for best deals
-        icon: "🟢",
-    },
-    fair: {
-        label: "Fair Price",
-        color: "bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 border-amber-300",
-        dotColor: "bg-amber-500",
-        borderGlow: "shadow-amber-100",
-        icon: "🟡",
-    },
-    expensive: {
-        label: "Above Market",
-        color: "bg-gradient-to-r from-rose-50 to-red-50 text-rose-700 border-rose-300",
-        dotColor: "bg-rose-500",
-        borderGlow: "shadow-rose-100",
-        icon: "🔴",
-    },
-};
-
 export default function ProductCard({ product }: ProductCardProps) {
     const [imageLoaded, setImageLoaded] = useState(false);
-    const priceScoreConfig = product.price_score ? PRICE_SCORE_CONFIG[product.price_score] : null;
 
     const handleClick = () => {
         window.open(product.source_url, "_blank", "noopener,noreferrer");
@@ -63,10 +21,10 @@ export default function ProductCard({ product }: ProductCardProps) {
         <motion.div
             whileHover={{ scale: 1.02 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="group cursor-pointer"
+            className="group cursor-pointer h-full"
             onClick={handleClick}
         >
-            <div className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100">
+            <div className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 h-full flex flex-col">
                 {/* Image Container with Source Badge */}
                 <div className="relative aspect-square bg-slate-100 overflow-hidden">
                     {/* Skeleton Loader */}
@@ -82,90 +40,67 @@ export default function ProductCard({ product }: ProductCardProps) {
                             }`}
                         onLoad={() => setImageLoaded(true)}
                         onError={(e) => {
-                            // Fallback to a gradient placeholder if image fails to load
                             console.error('Image failed to load:', product.image_url);
                             const target = e.target as HTMLImageElement;
                             target.style.display = 'none';
-                            // Don't set imageLoaded to true so fallback shows
                         }}
                         loading="lazy"
-                        crossOrigin="anonymous"
                     />
 
-                    {/* Fallback gradient if image hasn't loaded or failed */}
+                    {/* Fallback gradient if image hasn't loaded */}
                     <div className={`absolute inset-0 bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center transition-opacity ${imageLoaded ? 'opacity-0' : 'opacity-100'}`}>
-                        <div className="text-6xl opacity-20">
-                            {product.platform === 'wallapop' ? '🛒' :
-                                product.platform === 'vinted' ? '👕' :
-                                    product.platform === 'ebay' ? '🏪' : '📦'}
-                        </div>
+                        <div className="text-6xl opacity-20">🎁</div>
                     </div>
 
                     {/* Glassmorphism Source Badge - Top Right */}
                     <div className="absolute top-5 right-5 px-3 py-1.5 rounded-full backdrop-blur-md bg-white/70 border border-white/40 shadow-lg flex items-center gap-1.5">
                         <span className="text-lg">{PLATFORM_LOGOS[product.platform]}</span>
-                        <span className="text-xs font-medium text-slate-700 capitalize">
-                            {product.platform}
+                        <span className="text-xs font-medium text-slate-700">
+                            {PLATFORM_NAMES[product.platform]}
                         </span>
-                    </div>
-
-                    {/* Condition Badge - Top Left */}
-                    <div className="absolute top-5 left-5 px-2 py-1 rounded-lg backdrop-blur-md bg-black/40 text-white text-xs font-medium capitalize">
-                        {product.condition.replace("-", " ")}
                     </div>
 
                     {/* Hover Overlay */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center p-6">
                         <div className="flex items-center gap-2 text-white text-sm font-medium">
-                            <span>View on {product.platform}</span>
+                            <span>Ver en {PLATFORM_NAMES[product.platform]}</span>
                             <ExternalLink className="w-4 h-4" />
                         </div>
                     </div>
                 </div>
 
                 {/* Card Content */}
-                <div className="p-4">
-                    {/* Price Score Indicator */}
-                    {priceScoreConfig && (
-                        <div className="mb-3">
-                            <div
-                                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${priceScoreConfig.color}`}
-                            >
-                                <div className="relative">
-                                    <div className={`w-2 h-2 rounded-full ${priceScoreConfig.dotColor}`} />
-                                    {priceScoreConfig.pulse && (
-                                        <div className={`absolute top-0 left-0 w-2 h-2 rounded-full ${priceScoreConfig.dotColor} animate-ping opacity-75`} />
-                                    )}
-                                </div>
-                                {priceScoreConfig.label}
-                            </div>
-                        </div>
-                    )}
-
+                <div className="p-4 flex-1 flex flex-col">
                     {/* Product Title */}
                     <h3 className="font-heading text-text-main text-base font-semibold mb-2 line-clamp-2 leading-snug">
                         {product.title}
                     </h3>
 
-                    {/* Location */}
-                    <p className="text-sm text-slate-500 mb-3 flex items-center gap-1">
-                        <span>📍</span>
-                        {product.location}
-                    </p>
+                    {/* Findly Reason - The key differentiator */}
+                    {product.findly_reason && (
+                        <div className="mb-3 p-3 bg-primary/5 rounded-xl border border-primary/10">
+                            <div className="flex items-start gap-2">
+                                <Sparkles className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                                <p className="text-xs text-text-main/70 leading-relaxed">
+                                    {product.findly_reason}
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Spacer to push price to bottom */}
+                    <div className="flex-1" />
 
                     {/* Price */}
-                    <div className="flex items-baseline justify-between">
+                    <div className="flex items-baseline justify-between pt-2 border-t border-gray-50">
                         <span className="text-2xl font-bold text-primary">
-                            {product.currency === "EUR"
-                                ? `${product.price.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`
-                                : `${product.price.toFixed(2)} ${product.currency}`
-                            }
+                            {product.price.toLocaleString('es-ES', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            })} €
                         </span>
-                        <span className="text-xs text-slate-400">
-                            {new Date(product.created_at).toLocaleDateString("en-GB", {
-                                day: "numeric",
-                                month: "short",
-                            })}
+                        <span className="text-xs text-slate-400 capitalize">
+                            {PLATFORM_NAMES[product.platform]}
                         </span>
                     </div>
                 </div>

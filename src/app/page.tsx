@@ -1,133 +1,166 @@
 "use client";
 
-import { TrendingUp } from "lucide-react";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import SearchBar from "@/components/SearchBar";
-import ProductGrid from "@/components/ProductGrid";
-import CategoryBar from "@/components/CategoryBar";
-import StructuredData from "@/components/seo/StructuredData";
-import Leaderboard from "@/components/ads/Leaderboard";
-import { Product, Category } from "@/types";
-import { fetchProducts } from "@/lib/product-service";
-import { useScrollPosition } from "@/hooks/useScrollPosition";
+import { motion } from "framer-motion";
+import { Gift, Sparkles, Heart, Clock } from "lucide-react";
+import Link from "next/link";
 
 export default function Home() {
-    const router = useRouter();
-    const [products, setProducts] = useState<Product[]>([]);
-    const [loading, setLoading] = useState(true);
-    const { isScrolled } = useScrollPosition();
-
-    // Load "Trending Bargains" on mount
-    useEffect(() => {
-        loadTrendingBargains();
-    }, []);
-
-    const loadTrendingBargains = async () => {
-        setLoading(true);
-        try {
-            // Fetch all products and filter for bargains
-            const data = await fetchProducts();
-            const bargains = data.filter(product => product.price_score === "bargain");
-            setProducts(bargains);
-        } catch (error) {
-            console.error("Failed to load trending bargains:", error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleSearch = (query: string, category: string, location: string) => {
-        const params = new URLSearchParams();
-        if (query) params.set("q", query);
-        if (category && category !== "all") params.set("category", category);
-        if (location) params.set("location", location);
-        router.push(`/search?${params.toString()}`);
-    };
-
-    const handleCategorySelect = (category: Category | "all") => {
-        if (category === "all") {
-            router.push("/search");
-        } else {
-            router.push(`/search?category=${category}`);
-        }
-    };
-
     return (
         <main className="min-h-screen">
-            {/* JSON-LD Structured Data for AISO (AI Search Optimization) */}
-            <StructuredData
-                products={products}
-                includeWebsite={true}
-                includeOrganization={true}
-            />
-
             {/* Hero Section */}
-            <section className="pt-24 pb-8 px-6 lg:px-8">
-                <div className="max-w-5xl mx-auto text-center">
+            <section className="pt-32 pb-20 px-6 lg:px-8">
+                <div className="max-w-4xl mx-auto text-center">
                     {/* Badge */}
-                    <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-full mb-4">
-                        <TrendingUp className="w-4 h-4 text-primary" />
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5 }}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full mb-6"
+                    >
+                        <Sparkles className="w-4 h-4 text-primary" />
                         <span className="text-sm font-medium text-primary">
-                            Over 10,000 items listed this month
+                            Tu asesor de regalos inteligente
                         </span>
-                    </div>
+                    </motion.div>
 
                     {/* Main Heading */}
-                    <h1 className="font-heading text-4xl md:text-6xl font-bold text-text-main mb-4 leading-tight">
-                        Find everything.
+                    <motion.h1
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5, delay: 0.1 }}
+                        className="font-heading text-4xl md:text-6xl lg:text-7xl font-bold text-text-main mb-6 leading-tight"
+                    >
+                        Encuentra el regalo ideal
                         <br />
-                        <span className="text-primary">Second-hand.</span>
-                    </h1>
+                        <span className="text-primary">en 30 segundos</span>
+                    </motion.h1>
 
                     {/* Subheading */}
-                    <p className="text-base md:text-lg text-text-main/60 mb-8 max-w-2xl mx-auto font-light">
-                        Discover unique treasures and sustainable finds from people in your
-                        community. Buy, sell, and save the planet.
-                    </p>
+                    <motion.p
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5, delay: 0.2 }}
+                        className="text-lg md:text-xl text-text-main/60 mb-10 max-w-2xl mx-auto font-light"
+                    >
+                        Sin listas genéricas. Solo ideas pensadas para esa persona especial.
+                    </motion.p>
 
-                    {/* Premium Search Bar */}
-                    <div className={`transition-all duration-300 ${isScrolled ? "opacity-0 translate-y-4 pointer-events-none" : "opacity-100 translate-y-0"
-                        }`}>
-                        <SearchBar onSearch={handleSearch} />
+                    {/* CTA Button */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5, delay: 0.3 }}
+                    >
+                        <Link href="/quiz">
+                            <button className="group relative inline-flex items-center gap-3 bg-primary hover:bg-primary/90 text-white font-semibold text-lg px-10 py-5 rounded-full shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
+                                {/* Pulsing ring effect */}
+                                <span className="absolute inset-0 rounded-full bg-primary animate-ping opacity-20" />
+
+                                <Gift className="w-6 h-6" />
+                                <span>Empezar Cuestionario</span>
+                            </button>
+                        </Link>
+                    </motion.div>
+
+                    {/* Trust indicators */}
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.5, delay: 0.5 }}
+                        className="mt-12 flex flex-wrap justify-center gap-8 text-sm text-text-main/50"
+                    >
+                        <div className="flex items-center gap-2">
+                            <Clock className="w-4 h-4" />
+                            <span>Solo 4 preguntas</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Heart className="w-4 h-4" />
+                            <span>Recomendaciones personalizadas</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Sparkles className="w-4 h-4" />
+                            <span>100% gratuito</span>
+                        </div>
+                    </motion.div>
+                </div>
+            </section>
+
+            {/* Features Section */}
+            <section className="py-20 px-6 lg:px-8 bg-white/50">
+                <div className="max-w-6xl mx-auto">
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.5 }}
+                        className="text-center mb-16"
+                    >
+                        <h2 className="font-heading text-3xl md:text-4xl font-bold text-text-main mb-4">
+                            ¿Cómo funciona?
+                        </h2>
+                        <p className="text-text-main/60 max-w-xl mx-auto">
+                            Tres simples pasos para encontrar el regalo perfecto
+                        </p>
+                    </motion.div>
+
+                    <div className="grid md:grid-cols-3 gap-8">
+                        {[
+                            {
+                                step: "1",
+                                title: "Cuéntanos sobre la persona",
+                                description: "Edad, relación y qué ocasión estás celebrando.",
+                                icon: "👤",
+                            },
+                            {
+                                step: "2",
+                                title: "Selecciona sus intereses",
+                                description: "Tecnología, moda, deportes, cultura y más.",
+                                icon: "💡",
+                            },
+                            {
+                                step: "3",
+                                title: "Recibe ideas personalizadas",
+                                description: "3-5 regalos perfectos con explicación de por qué.",
+                                icon: "🎁",
+                            },
+                        ].map((feature, index) => (
+                            <motion.div
+                                key={feature.step}
+                                initial={{ opacity: 0, y: 20 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ duration: 0.5, delay: index * 0.1 }}
+                                className="bg-white rounded-3xl p-8 shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100"
+                            >
+                                <div className="text-5xl mb-4">{feature.icon}</div>
+                                <div className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm mb-4">
+                                    {feature.step}
+                                </div>
+                                <h3 className="font-heading text-xl font-semibold text-text-main mb-2">
+                                    {feature.title}
+                                </h3>
+                                <p className="text-text-main/60">
+                                    {feature.description}
+                                </p>
+                            </motion.div>
+                        ))}
                     </div>
                 </div>
             </section>
 
-            {/* Category Quick-Links Bar */}
-            <CategoryBar
-                selectedCategory="all"
-                onCategorySelect={handleCategorySelect}
-            />
-
-            {/* Leaderboard Ad */}
-            <Leaderboard />
-
-            {/* Trending Section */}
-            <section className="pb-20 px-6 lg:px-8 mt-6">
-                <div className="max-w-7xl mx-auto">
-                    {/* Section Title */}
-                    <div className="mb-6">
-                        <h2 className="font-heading text-2xl md:text-3xl font-bold text-text-main mb-2">
-                            🔥 Trending Bargains
-                        </h2>
-                        <p className="text-slate-600">
-                            The best deals on the market right now
-                        </p>
+            {/* Affiliate Partners Section */}
+            <section className="py-16 px-6 lg:px-8">
+                <div className="max-w-4xl mx-auto text-center">
+                    <p className="text-sm text-text-main/40 mb-6">
+                        Regalos seleccionados de las mejores tiendas
+                    </p>
+                    <div className="flex flex-wrap justify-center gap-8 items-center text-2xl opacity-60">
+                        <span title="Amazon">🛒 Amazon</span>
+                        <span title="Etsy">🎨 Etsy</span>
+                        <span title="El Corte Inglés">🏬 El Corte Inglés</span>
+                        <span title="Fnac">📚 Fnac</span>
+                        <span title="Decathlon">⚽ Decathlon</span>
                     </div>
-
-                    {loading ? (
-                        // Loading State
-                        <div className="text-center py-20">
-                            <div className="inline-block w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
-                            <p className="text-slate-600">
-                                Loading trending bargains...
-                            </p>
-                        </div>
-                    ) : (
-                        // Products Grid
-                        <ProductGrid products={products} />
-                    )}
                 </div>
             </section>
         </main>

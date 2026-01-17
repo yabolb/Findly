@@ -1,9 +1,9 @@
 /**
  * PRODUCT GRID COMPONENT
- * PRD Section 7: Monetization with In-feed Ads
+ * PRD v12.0 Section 7: Monetization with In-feed Ads
  * 
- * Responsive grid layout with dynamic AdCard injection
- * at position #5, then every 10 products (15, 25, 35...).
+ * Responsive grid layout for gift recommendations
+ * with dynamic AdCard injection.
  */
 
 "use client";
@@ -26,19 +26,18 @@ interface ProductGridProps {
 
 export default function ProductGrid({
     products,
-    showAds = true,
-    hideResultsCount = false,
+    showAds = false,
+    hideResultsCount = true,
     gridId = "product-grid"
 }: ProductGridProps) {
     /**
      * Calculate positions for AdSense placements
-     * PRD Section 7: Position #5, then every 10 products (15, 25, 35...)
+     * Position #5, then every 10 products (15, 25, 35...)
      */
     const shouldShowAd = (index: number): boolean => {
         if (!showAds) return false;
 
         const position = index + 1;
-        // First ad at position 5, then every 10 (so at positions 5, 15, 25, 35...)
         if (position === 5) return true;
         if (position > 5 && (position - 5) % 10 === 0) return true;
 
@@ -47,14 +46,12 @@ export default function ProductGrid({
 
     /**
      * Build grid items including products and ads
-     * Maintains grid flow without breaking responsiveness
      */
     const buildGridItems = (): React.ReactElement[] => {
         const items: React.ReactElement[] = [];
         let adCounter = 1;
 
         products.forEach((product, index) => {
-            // Check if we should insert an ad BEFORE this product
             if (shouldShowAd(index)) {
                 items.push(
                     <AdCard
@@ -65,7 +62,6 @@ export default function ProductGrid({
                 adCounter++;
             }
 
-            // Add the product
             items.push(
                 <ProductCard key={product.id} product={product} />
             );
@@ -82,7 +78,7 @@ export default function ProductGrid({
         visible: {
             opacity: 1,
             transition: {
-                staggerChildren: 0.05, // Faster stagger for many items
+                staggerChildren: 0.08,
             },
         },
     };
@@ -93,7 +89,7 @@ export default function ProductGrid({
             opacity: 1,
             y: 0,
             transition: {
-                duration: 0.3,
+                duration: 0.4,
                 ease: [0.4, 0, 0.2, 1] as const,
             },
         },
@@ -105,15 +101,14 @@ export default function ProductGrid({
             {!hideResultsCount && (
                 <div className="mb-6">
                     <p className="text-slate-600">
-                        <span className="font-semibold text-text-main">{products.length}</span> results
-                        found
+                        <span className="font-semibold text-text-main">{products.length}</span> regalo{products.length !== 1 ? 's' : ''} encontrado{products.length !== 1 ? 's' : ''}
                     </p>
                 </div>
             )}
 
             {/* Responsive Grid with Staggered Animation */}
             <motion.div
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 lg:gap-6"
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-6"
                 variants={containerVariants}
                 initial="hidden"
                 animate="visible"

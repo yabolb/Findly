@@ -21,9 +21,16 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-    title: "Findly - Find everything. Second-hand.",
-    description: "Discover amazing second-hand items near you. Buy and sell with ease.",
-    metadataBase: new URL('https://findly.com'),
+    title: "Findly - Tu Asesor de Regalos Inteligente",
+    description: "Encuentra el regalo perfecto en 30 segundos. Recomendaciones personalizadas para cualquier ocasión. Sin listas genéricas, solo ideas pensadas para esa persona especial.",
+    keywords: ["regalos personalizados", "ideas de regalo", "regalos España", "cuestionario de regalos", "regalos originales"],
+    metadataBase: new URL('https://getfindly.com'),
+    openGraph: {
+        title: "Findly - Tu Asesor de Regalos Inteligente",
+        description: "Encuentra el regalo perfecto en 30 segundos. Recomendaciones personalizadas para cualquier ocasión.",
+        locale: "es_ES",
+        type: "website",
+    },
 };
 
 export default function RootLayout({
@@ -32,7 +39,7 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="en" suppressHydrationWarning className={`${plusJakartaSans.variable} ${inter.variable}`}>
+        <html lang="es" suppressHydrationWarning className={`${plusJakartaSans.variable} ${inter.variable}`}>
             <body className={`${inter.className} bg-background min-h-screen flex flex-col`} suppressHydrationWarning>
                 {/* GDPR Consent Management */}
                 <ConsentManager />
@@ -48,4 +55,3 @@ export default function RootLayout({
         </html>
     );
 }
-

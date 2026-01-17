@@ -1,68 +1,85 @@
 // ========================================
-// FINDLY - TYPE DEFINITIONS (PRD-Aligned)
+// FINDLY - SMART GIFT ADVISOR (PRD v12.0)
+// Market: Spain | Language: Spanish | Currency: EUR
 // ========================================
 
-// 13 Core Categories from PRD
+// 11 Gift Categories (PRD v12.0 Section 4 - Step 3 Interests)
 export type Category =
-    | "cars-motorcycles"
-    | "fashion"
-    | "real-estate"
-    | "tech-electronics"
-    | "sports-leisure"
-    | "home-garden"
-    | "movies-books-music"
-    | "baby-kids"
-    | "collectibles-art"
-    | "diy"
-    | "agriculture-industrial"
-    | "services"
-    | "others";
+    | "tech-electronics"       // Tecnología
+    | "fashion"                // Moda y Accesorios
+    | "sports-leisure"         // Deporte y Ocio
+    | "home-garden"            // Hogar y Decoración
+    | "movies-books-music"     // Cultura: Libros, Cine, Música
+    | "baby-kids"              // Bebés y Niños
+    | "collectibles-art"       // Coleccionismo y Arte
+    | "diy"                    // Bricolaje y Manualidades
+    | "motor-accessories"      // Motor y Accesorios
+    | "beauty-personal-care"   // Belleza y Cuidado Personal
+    | "travel-experiences";    // Viajes y Experiencias
 
-// Product Condition
-export type ProductCondition = "new" | "like-new" | "good" | "fair" | "poor";
-
-// Platform Sources
-export type Platform = "wallapop" | "vinted" | "ebay" | "milanuncios";
-
-// Price Score (Trust Engine)
-export type PriceScore = "bargain" | "fair" | "expensive" | null;
+// Platform Sources (Affiliate Partners - PRD v12.0 Section 3)
+export type Platform =
+    | "amazon"         // Amazon Associates (Generalist)
+    | "etsy"           // Etsy via Awin (Handmade/Craft)
+    | "elcorteingles"  // El Corte Inglés via Awin (Premium)
+    | "fnac"           // Fnac via Awin (Culture & Tech)
+    | "decathlon";     // Decathlon via Awin (Sports)
 
 // ============================================
-// SYNC LOGS (Scraper Health Monitoring)
+// GIFT QUIZ TYPES
 // ============================================
 
-// Sync status types
-export type SyncStatus = "success" | "error" | "banned" | "suspicious" | "timeout";
+// Recipient age ranges
+export type AgeRange =
+    | "child"      // Niño (0-12)
+    | "teen"       // Adolescente (13-17)
+    | "young"      // Joven (18-30)
+    | "adult"      // Adulto (31-60)
+    | "senior";    // Mayor (+60)
 
-// Sync log entry
-export interface SyncLog {
-    id: string;
-    platform: Platform;
-    status: SyncStatus;
-    http_status: number | null;
-    error_message: string | null;
-    items_found: number;
-    items_added: number;
-    response_time_ms: number | null;
-    created_at: Date;
+// Recipient relationships
+export type Relationship =
+    | "partner"    // Pareja
+    | "friend"     // Amigo/a
+    | "mother"     // Madre
+    | "father"     // Padre
+    | "sibling"    // Hermano/a
+    | "teacher"    // Profesor/a
+    | "colleague"  // Colega
+    | "boss";      // Jefe/a
+
+// Gift occasions
+export type Occasion =
+    | "birthday"       // Cumpleaños
+    | "christmas"      // Navidad
+    | "wedding"        // Boda
+    | "anniversary"    // Aniversario
+    | "gratitude"      // Agradecimiento
+    | "valentines"     // San Valentín
+    | "fathers-day"    // Día del Padre
+    | "mothers-day";   // Día de la Madre
+
+// Budget ranges in EUR
+export type BudgetRange =
+    | "under-20"       // < 20€
+    | "20-50"          // 20€ - 50€
+    | "50-100"         // 50€ - 100€
+    | "over-100";      // + 100€
+
+// Quiz answers collected from user
+export interface QuizAnswers {
+    ageRange: AgeRange | null;
+    relationship: Relationship | null;
+    occasion: Occasion | null;
+    interests: Category[];
+    budget: BudgetRange | null;
 }
 
-// Platform health statistics
-export interface PlatformHealth {
-    platform: Platform;
-    totalSyncs: number;
-    successCount: number;
-    errorCount: number;
-    bannedCount: number;
-    suspiciousCount: number;
-    successRate: number;
-    totalItemsFound: number;
-    lastSyncAt: Date | null;
-    lastStatus: SyncStatus | null;
-    isHealthy: boolean;
-}
+// ============================================
+// PRODUCT & GIFT TYPES
+// ============================================
 
-// Product from marketplace listings (PRD Database Schema)
+// Product from curated catalog (PRD Database Schema)
 export interface Product {
     id: string;
     title: string;
@@ -70,89 +87,72 @@ export interface Product {
     price: number;
     currency: string; // default 'EUR'
     image_url: string;
-    source_url: string; // unique external URL
+    source_url: string; // Affiliate link
     platform: Platform;
     category: Category;
-    location: string;
-    condition: ProductCondition;
-    phash: string | null; // Perceptual hash for de-duplication
-    price_score: PriceScore; // Bargain/Fair/Expensive indicator
+    findly_reason?: string; // Template-based justification
     created_at: Date;
 }
 
-// Geographic location
-export interface Location {
-    city: string;
-    region?: string;
-    country: string;
-    coordinates?: {
-        lat: number;
-        lng: number;
-    };
-}
+// ============================================
+// UI LABELS (Spanish)
+// ============================================
 
-// User/Seller information
-export interface Seller {
-    id: string;
-    name: string;
-    avatar?: string;
-    rating?: number;
-    totalSales?: number;
-    verified: boolean;
-}
-
-// Category structure (for navigation)
-export interface CategoryItem {
-    id: Category;
-    name: string;
-    slug: string;
-    icon?: string;
-    parentId?: string;
-    subcategories?: CategoryItem[];
-}
-
-// Sort options for search results
-export type SortOption = "relevance" | "price_asc" | "price_desc" | "date_desc";
-
-// Search filters
-export interface SearchFilters {
-    query?: string;
-    category?: Category;
-    minPrice?: number;
-    maxPrice?: number;
-    condition?: ProductCondition[];
-    location?: string;
-    radius?: number; // in kilometers
-    platform?: Platform[];
-    priceScore?: PriceScore[];
-    dateFilter?: "24h" | "week" | "month" | "all";
-    sortBy?: SortOption;
-}
-
-// Paginated response
-export interface PaginatedResponse<T> {
-    data: T[];
-    pagination: {
-        page: number;
-        pageSize: number;
-        total: number;
-        totalPages: number;
-    };
-}
-
-// Category Mapping (for display)
 export const CATEGORY_LABELS: Record<Category, string> = {
-    "cars-motorcycles": "Cars & Motorcycles",
-    fashion: "Fashion",
-    "real-estate": "Real Estate",
-    "tech-electronics": "Tech & Electronics",
-    "sports-leisure": "Sports & Leisure",
-    "home-garden": "Home & Garden",
-    "movies-books-music": "Movies, Books & Music",
-    "baby-kids": "Baby & Kids",
-    "collectibles-art": "Collectibles & Art",
-    diy: "DIY",
-    "agriculture-industrial": "Agriculture & Industrial",
-    services: "Services",
-    others: "Others",
+    "tech-electronics": "Tecnología",
+    "fashion": "Moda y Accesorios",
+    "sports-leisure": "Deporte y Ocio",
+    "home-garden": "Hogar y Decoración",
+    "movies-books-music": "Cultura",
+    "baby-kids": "Bebés y Niños",
+    "collectibles-art": "Coleccionismo y Arte",
+    "diy": "Bricolaje y Manualidades",
+    "motor-accessories": "Motor y Accesorios",
+    "beauty-personal-care": "Belleza y Cuidado Personal",
+    "travel-experiences": "Viajes y Experiencias",
+};
+
+export const AGE_RANGE_LABELS: Record<AgeRange, string> = {
+    "child": "Niño (0-12)",
+    "teen": "Adolescente (13-17)",
+    "young": "Joven (18-30)",
+    "adult": "Adulto (31-60)",
+    "senior": "Mayor (+60)",
+};
+
+export const RELATIONSHIP_LABELS: Record<Relationship, string> = {
+    "partner": "Pareja",
+    "friend": "Amigo/a",
+    "mother": "Madre",
+    "father": "Padre",
+    "sibling": "Hermano/a",
+    "teacher": "Profesor/a",
+    "colleague": "Colega",
+    "boss": "Jefe/a",
+};
+
+export const OCCASION_LABELS: Record<Occasion, string> = {
+    "birthday": "Cumpleaños",
+    "christmas": "Navidad",
+    "wedding": "Boda",
+    "anniversary": "Aniversario",
+    "gratitude": "Agradecimiento",
+    "valentines": "San Valentín",
+    "fathers-day": "Día del Padre",
+    "mothers-day": "Día de la Madre",
+};
+
+export const BUDGET_LABELS: Record<BudgetRange, string> = {
+    "under-20": "Menos de 20€",
+    "20-50": "20€ - 50€",
+    "50-100": "50€ - 100€",
+    "over-100": "Más de 100€",
+};
+
+// Budget range to price limits for filtering
+export const BUDGET_LIMITS: Record<BudgetRange, { min: number; max: number }> = {
+    "under-20": { min: 0, max: 20 },
+    "20-50": { min: 20, max: 50 },
+    "50-100": { min: 50, max: 100 },
+    "over-100": { min: 100, max: 999999 },
 };
