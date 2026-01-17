@@ -36,7 +36,6 @@ export default function GiftQuiz({ onComplete }: GiftQuizProps) {
 
     const totalSteps = 4;
 
-    // Step configurations
     const steps = [
         {
             title: "¿Para quién es el regalo?",
@@ -98,7 +97,7 @@ export default function GiftQuiz({ onComplete }: GiftQuizProps) {
 
     const slideVariants = {
         enter: (direction: number) => ({
-            x: direction > 0 ? 300 : -300,
+            x: direction > 0 ? 100 : -100,
             opacity: 0,
         }),
         center: {
@@ -106,7 +105,7 @@ export default function GiftQuiz({ onComplete }: GiftQuizProps) {
             opacity: 1,
         },
         exit: (direction: number) => ({
-            x: direction < 0 ? 300 : -300,
+            x: direction < 0 ? 100 : -100,
             opacity: 0,
         }),
     };
@@ -115,34 +114,44 @@ export default function GiftQuiz({ onComplete }: GiftQuizProps) {
 
     const paginate = (newDirection: number) => {
         setDirection(newDirection);
-        if (newDirection > 0) {
+        if (newDirection > 0 && canProceed()) {
             handleNext();
-        } else {
+        } else if (newDirection < 0) {
             handleBack();
         }
     };
 
     return (
-        <div className="min-h-[calc(100vh-200px)] flex flex-col">
-            {/* Progress Bar */}
-            <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden mb-8">
-                <motion.div
-                    className="h-full bg-primary"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${((currentStep + 1) / totalSteps) * 100}%` }}
-                    transition={{ duration: 0.3 }}
-                />
+        <div className="flex flex-col min-h-[70vh]">
+            {/* Progress Bar - Fixed at top */}
+            <div className="flex-shrink-0 mb-4">
+                <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                    <motion.div
+                        className="h-full bg-primary"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${((currentStep + 1) / totalSteps) * 100}%` }}
+                        transition={{ duration: 0.3 }}
+                    />
+                </div>
+                <div className="text-center mt-3">
+                    <span className="text-sm text-text-main/50">
+                        Paso {currentStep + 1} de {totalSteps}
+                    </span>
+                </div>
             </div>
 
-            {/* Step Indicator */}
-            <div className="text-center mb-8">
-                <span className="text-sm text-text-main/50">
-                    Paso {currentStep + 1} de {totalSteps}
-                </span>
+            {/* Step Title */}
+            <div className="flex-shrink-0 text-center mb-6">
+                <h2 className="font-heading text-xl sm:text-2xl md:text-3xl font-bold text-text-main mb-2">
+                    {steps[currentStep].title}
+                </h2>
+                <p className="text-sm sm:text-base text-text-main/60">
+                    {steps[currentStep].subtitle}
+                </p>
             </div>
 
-            {/* Content Area */}
-            <div className="flex-1 relative overflow-hidden">
+            {/* Content Area - Scrollable */}
+            <div className="flex-1 overflow-y-auto pb-4">
                 <AnimatePresence mode="wait" custom={direction}>
                     <motion.div
                         key={currentStep}
@@ -151,40 +160,29 @@ export default function GiftQuiz({ onComplete }: GiftQuizProps) {
                         initial="enter"
                         animate="center"
                         exit="exit"
-                        transition={{ duration: 0.3, ease: "easeInOut" }}
-                        className="absolute inset-0"
+                        transition={{ duration: 0.2, ease: "easeInOut" }}
+                        className="w-full"
                     >
-                        {/* Step Title */}
-                        <div className="text-center mb-8">
-                            <h2 className="font-heading text-2xl md:text-3xl font-bold text-text-main mb-2">
-                                {steps[currentStep].title}
-                            </h2>
-                            <p className="text-text-main/60">
-                                {steps[currentStep].subtitle}
-                            </p>
-                        </div>
-
-                        {/* Step Content */}
-                        <div className="max-w-2xl mx-auto">
+                        <div className="max-w-2xl mx-auto px-2">
                             {/* Step 1: Recipient */}
                             {currentStep === 0 && (
-                                <div className="space-y-8">
+                                <div className="space-y-6">
                                     {/* Age Range */}
                                     <div>
                                         <h3 className="text-sm font-medium text-text-main/70 mb-3">
                                             Rango de edad
                                         </h3>
-                                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3">
                                             {(Object.keys(AGE_RANGE_LABELS) as AgeRange[]).map((age) => (
                                                 <button
                                                     key={age}
                                                     onClick={() => setAnswers({ ...answers, ageRange: age })}
-                                                    className={`p-4 rounded-2xl border-2 transition-all duration-200 ${answers.ageRange === age
-                                                        ? "border-primary bg-primary/10 shadow-lg"
-                                                        : "border-gray-200 hover:border-primary/50 bg-white"
+                                                    className={`p-3 sm:p-4 rounded-xl sm:rounded-2xl border-2 transition-all duration-200 ${answers.ageRange === age
+                                                        ? "border-primary bg-primary/10 shadow-md"
+                                                        : "border-gray-200 hover:border-primary/50 bg-white active:bg-gray-50"
                                                         }`}
                                                 >
-                                                    <span className="text-sm font-medium text-text-main">
+                                                    <span className="text-xs sm:text-sm font-medium text-text-main block text-center">
                                                         {AGE_RANGE_LABELS[age]}
                                                     </span>
                                                 </button>
@@ -197,17 +195,17 @@ export default function GiftQuiz({ onComplete }: GiftQuizProps) {
                                         <h3 className="text-sm font-medium text-text-main/70 mb-3">
                                             Relación
                                         </h3>
-                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
                                             {(Object.keys(RELATIONSHIP_LABELS) as Relationship[]).map((rel) => (
                                                 <button
                                                     key={rel}
                                                     onClick={() => setAnswers({ ...answers, relationship: rel })}
-                                                    className={`p-4 rounded-2xl border-2 transition-all duration-200 ${answers.relationship === rel
-                                                        ? "border-primary bg-primary/10 shadow-lg"
-                                                        : "border-gray-200 hover:border-primary/50 bg-white"
+                                                    className={`p-3 sm:p-4 rounded-xl sm:rounded-2xl border-2 transition-all duration-200 ${answers.relationship === rel
+                                                        ? "border-primary bg-primary/10 shadow-md"
+                                                        : "border-gray-200 hover:border-primary/50 bg-white active:bg-gray-50"
                                                         }`}
                                                 >
-                                                    <span className="text-sm font-medium text-text-main">
+                                                    <span className="text-xs sm:text-sm font-medium text-text-main block text-center">
                                                         {RELATIONSHIP_LABELS[rel]}
                                                     </span>
                                                 </button>
@@ -219,17 +217,17 @@ export default function GiftQuiz({ onComplete }: GiftQuizProps) {
 
                             {/* Step 2: Occasion */}
                             {currentStep === 1 && (
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                                     {(Object.keys(OCCASION_LABELS) as Occasion[]).map((occ) => (
                                         <button
                                             key={occ}
                                             onClick={() => setAnswers({ ...answers, occasion: occ })}
-                                            className={`p-6 rounded-3xl border-2 transition-all duration-200 ${answers.occasion === occ
-                                                ? "border-primary bg-primary/10 shadow-lg scale-105"
-                                                : "border-gray-200 hover:border-primary/50 bg-white hover:scale-102"
+                                            className={`p-4 sm:p-6 rounded-2xl sm:rounded-3xl border-2 transition-all duration-200 ${answers.occasion === occ
+                                                ? "border-primary bg-primary/10 shadow-md scale-[1.02]"
+                                                : "border-gray-200 hover:border-primary/50 bg-white active:bg-gray-50"
                                                 }`}
                                         >
-                                            <div className="text-3xl mb-2">
+                                            <div className="text-2xl sm:text-3xl mb-2 text-center">
                                                 {occ === "birthday" && "🎂"}
                                                 {occ === "christmas" && "🎄"}
                                                 {occ === "wedding" && "💒"}
@@ -239,7 +237,7 @@ export default function GiftQuiz({ onComplete }: GiftQuizProps) {
                                                 {occ === "fathers-day" && "👔"}
                                                 {occ === "mothers-day" && "💐"}
                                             </div>
-                                            <span className="text-sm font-medium text-text-main">
+                                            <span className="text-xs sm:text-sm font-medium text-text-main block text-center">
                                                 {OCCASION_LABELS[occ]}
                                             </span>
                                         </button>
@@ -249,25 +247,25 @@ export default function GiftQuiz({ onComplete }: GiftQuizProps) {
 
                             {/* Step 3: Interests */}
                             {currentStep === 2 && (
-                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3">
                                     {(Object.keys(CATEGORY_LABELS) as Category[]).map((cat) => (
                                         <button
                                             key={cat}
                                             onClick={() => toggleInterest(cat)}
-                                            className={`p-4 rounded-2xl border-2 transition-all duration-200 relative ${answers.interests.includes(cat)
-                                                ? "border-primary bg-primary/10 shadow-lg"
-                                                : "border-gray-200 hover:border-primary/50 bg-white"
+                                            className={`p-3 sm:p-4 rounded-xl sm:rounded-2xl border-2 transition-all duration-200 relative ${answers.interests.includes(cat)
+                                                ? "border-primary bg-primary/10 shadow-md"
+                                                : "border-gray-200 hover:border-primary/50 bg-white active:bg-gray-50"
                                                 }`}
                                         >
                                             {answers.interests.includes(cat) && (
-                                                <div className="absolute top-2 right-2 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
-                                                    <Check className="w-3 h-3 text-white" />
+                                                <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 w-4 h-4 sm:w-5 sm:h-5 bg-primary rounded-full flex items-center justify-center">
+                                                    <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" />
                                                 </div>
                                             )}
-                                            <div className="text-2xl mb-2">
+                                            <div className="text-xl sm:text-2xl mb-1 sm:mb-2 text-center">
                                                 {CATEGORY_ICONS[cat]}
                                             </div>
-                                            <span className="text-xs font-medium text-text-main">
+                                            <span className="text-[10px] sm:text-xs font-medium text-text-main block text-center leading-tight">
                                                 {CATEGORY_LABELS[cat]}
                                             </span>
                                         </button>
@@ -277,18 +275,18 @@ export default function GiftQuiz({ onComplete }: GiftQuizProps) {
 
                             {/* Step 4: Budget */}
                             {currentStep === 3 && (
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                <div className="grid grid-cols-2 gap-3 sm:gap-4">
                                     {(Object.keys(BUDGET_LABELS) as BudgetRange[]).map((budget) => (
                                         <button
                                             key={budget}
                                             onClick={() => setAnswers({ ...answers, budget })}
-                                            className={`p-8 rounded-3xl border-2 transition-all duration-200 ${answers.budget === budget
-                                                ? "border-primary bg-primary/10 shadow-lg scale-105"
-                                                : "border-gray-200 hover:border-primary/50 bg-white"
+                                            className={`p-6 sm:p-8 rounded-2xl sm:rounded-3xl border-2 transition-all duration-200 ${answers.budget === budget
+                                                ? "border-primary bg-primary/10 shadow-md scale-[1.02]"
+                                                : "border-gray-200 hover:border-primary/50 bg-white active:bg-gray-50"
                                                 }`}
                                         >
-                                            <div className="text-3xl mb-2">💰</div>
-                                            <span className="text-lg font-bold text-text-main">
+                                            <div className="text-2xl sm:text-3xl mb-2 text-center">💰</div>
+                                            <span className="text-sm sm:text-lg font-bold text-text-main block text-center">
                                                 {BUDGET_LABELS[budget]}
                                             </span>
                                         </button>
@@ -300,28 +298,28 @@ export default function GiftQuiz({ onComplete }: GiftQuizProps) {
                 </AnimatePresence>
             </div>
 
-            {/* Navigation Buttons */}
-            <div className="flex justify-between items-center mt-8 pt-6 border-t border-gray-100">
+            {/* Navigation Buttons - Fixed at bottom */}
+            <div className="flex-shrink-0 flex justify-between items-center pt-4 mt-4 border-t border-gray-100 bg-background">
                 <button
                     onClick={() => paginate(-1)}
-                    className="flex items-center gap-2 text-text-main/60 hover:text-text-main transition-colors px-4 py-2 rounded-full hover:bg-gray-100"
+                    className="flex items-center gap-1 sm:gap-2 text-text-main/60 hover:text-text-main transition-colors px-3 sm:px-4 py-2 rounded-full hover:bg-gray-100 active:bg-gray-200"
                 >
-                    <ArrowLeft className="w-5 h-5" />
-                    <span>{currentStep === 0 ? "Inicio" : "Anterior"}</span>
+                    <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <span className="text-sm sm:text-base">{currentStep === 0 ? "Inicio" : "Anterior"}</span>
                 </button>
 
                 <button
                     onClick={() => paginate(1)}
                     disabled={!canProceed()}
-                    className={`flex items-center gap-2 px-8 py-3 rounded-full font-semibold transition-all duration-200 ${canProceed()
-                        ? "bg-primary text-white hover:bg-primary/90 shadow-lg hover:shadow-xl"
+                    className={`flex items-center gap-1 sm:gap-2 px-5 sm:px-8 py-2.5 sm:py-3 rounded-full font-semibold text-sm sm:text-base transition-all duration-200 ${canProceed()
+                        ? "bg-primary text-white hover:bg-primary/90 shadow-lg hover:shadow-xl active:scale-95"
                         : "bg-gray-200 text-gray-400 cursor-not-allowed"
                         }`}
                 >
                     <span>
                         {currentStep === totalSteps - 1 ? "Ver Regalos" : "Siguiente"}
                     </span>
-                    <ArrowRight className="w-5 h-5" />
+                    <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
             </div>
         </div>

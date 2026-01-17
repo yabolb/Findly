@@ -2,7 +2,7 @@
 
 import { Product } from "@/types";
 import { PLATFORM_LOGOS, PLATFORM_NAMES } from "@/lib/mock-data";
-import { ExternalLink, Sparkles } from "lucide-react";
+import { ExternalLink, Sparkles, ShoppingBag } from "lucide-react";
 import { useState } from "react";
 import { motion } from "framer-motion";
 
@@ -14,6 +14,11 @@ export default function ProductCard({ product }: ProductCardProps) {
     const [imageLoaded, setImageLoaded] = useState(false);
 
     const handleClick = () => {
+        window.open(product.source_url, "_blank", "noopener,noreferrer");
+    };
+
+    const handleBuyClick = (e: React.MouseEvent) => {
+        e.stopPropagation(); // Prevent card click
         window.open(product.source_url, "_blank", "noopener,noreferrer");
     };
 
@@ -88,20 +93,28 @@ export default function ProductCard({ product }: ProductCardProps) {
                         </div>
                     )}
 
-                    {/* Spacer to push price to bottom */}
+                    {/* Spacer to push content to bottom */}
                     <div className="flex-1" />
 
-                    {/* Price */}
-                    <div className="flex items-baseline justify-between pt-2 border-t border-gray-50">
-                        <span className="text-2xl font-bold text-primary">
-                            {product.price.toLocaleString('es-ES', {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2
-                            })} €
-                        </span>
-                        <span className="text-xs text-slate-400 capitalize">
-                            {PLATFORM_NAMES[product.platform]}
-                        </span>
+                    {/* Price and Buy Button */}
+                    <div className="space-y-3 pt-2 border-t border-gray-50">
+                        <div className="flex items-baseline">
+                            <span className="text-2xl font-bold text-primary">
+                                {product.price.toLocaleString('es-ES', {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2
+                                })} €
+                            </span>
+                        </div>
+
+                        {/* Buy Now Button */}
+                        <button
+                            onClick={handleBuyClick}
+                            className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white font-semibold py-3 px-4 rounded-2xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98]"
+                        >
+                            <ShoppingBag className="w-4 h-4" />
+                            <span>Comprar Ahora</span>
+                        </button>
                     </div>
                 </div>
             </div>
