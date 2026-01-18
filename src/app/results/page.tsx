@@ -290,7 +290,7 @@ function ResultsContent() {
                         )}
 
                         {/* Product Grid */}
-                        <ProductGrid products={products} hideResultsCount />
+                        <ProductGrid products={products} hideResultsCount showAds={true} />
 
                         {/* Start Over Button - Quiz Only */}
                         {isQuizSource && (

@@ -20,12 +20,16 @@ interface AdCardProps {
     /** Position in the grid for tracking/analytics */
     position?: number;
     /** Variant: 'standard' for normal in-feed, 'featured' for promoted content */
+    /** Variant: 'standard' for normal in-feed, 'featured' for promoted content */
     variant?: "standard" | "featured";
+    /** Ad Format (default: 'fluid' for In-Feed) */
+    format?: "auto" | "fluid" | "rectangle";
 }
 
 export default function AdCard({
-    slotId,
-    layoutKey,
+    slotId = process.env.NEXT_PUBLIC_ADSENSE_PRODUCT_SLOT_ID,
+    layoutKey = process.env.NEXT_PUBLIC_ADSENSE_PRODUCT_LAYOUT_KEY,
+    format = "fluid",
     position = 0,
     variant = "standard"
 }: AdCardProps) {
