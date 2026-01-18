@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Product, QuizAnswers, RELATIONSHIP_LABELS, OCCASION_LABELS, BUDGET_LABELS, BUDGET_LIMITS, CATEGORY_LABELS, Category, BudgetRange } from "@/types";
 import { supabase } from "@/lib/supabase";
@@ -37,7 +37,7 @@ const CATEGORY_SEO_LABELS: Record<string, string> = {
     "travel-experiences": "viajes",
 };
 
-export default function ResultsPage() {
+function ResultsContent() {
     const searchParams = useSearchParams();
     const [products, setProducts] = useState<Product[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -332,5 +332,17 @@ export default function ResultsPage() {
                 )}
             </div>
         </div>
+    );
+}
+
+export default function ResultsPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-background flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            </div>
+        }>
+            <ResultsContent />
+        </Suspense>
     );
 }
