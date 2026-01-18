@@ -1,23 +1,38 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import GiftQuiz from "@/components/GiftQuiz";
-import QuizResults from "@/components/QuizResults";
 import { QuizAnswers } from "@/types";
 
 export default function QuizPage() {
-    const [quizComplete, setQuizComplete] = useState(false);
-    const [answers, setAnswers] = useState<QuizAnswers | null>(null);
+    const router = useRouter();
 
     const handleQuizComplete = (quizAnswers: QuizAnswers) => {
-        setAnswers(quizAnswers);
-        setQuizComplete(true);
-    };
+        // Build query string from quiz answers
+        const params = new URLSearchParams();
+        params.set("source", "quiz");
 
-    const handleStartOver = () => {
-        setQuizComplete(false);
-        setAnswers(null);
+        if (quizAnswers.relationship) {
+            params.set("relationship", quizAnswers.relationship);
+        }
+        if (quizAnswers.ageRange) {
+            params.set("ageRange", quizAnswers.ageRange);
+        }
+        if (quizAnswers.occasion) {
+            params.set("occasion", quizAnswers.occasion);
+        }
+        if (quizAnswers.budget) {
+            params.set("budget", quizAnswers.budget);
+        }
+        // Add interests as array parameters
+        quizAnswers.interests.forEach((interest) => {
+            params.append("interests[]", interest);
+        });
+
+        // Redirect to unified results page
+        router.push(`/results?${params.toString()}`);
     };
 
     return (
@@ -28,14 +43,7 @@ export default function QuizPage() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5 }}
                 >
-                    {!quizComplete ? (
-                        <GiftQuiz onComplete={handleQuizComplete} />
-                    ) : (
-                        <QuizResults
-                            answers={answers!}
-                            onStartOver={handleStartOver}
-                        />
-                    )}
+                    <GiftQuiz onComplete={handleQuizComplete} />
                 </motion.div>
             </div>
         </main>

@@ -4,21 +4,53 @@
  * 
  * A responsive horizontal ad container placed below the header
  * and above the search results. "Above-the-fold" premium placement.
+ * Displays Google AdSense when enabled, or a placeholder for dev/preview.
  */
 
 "use client";
 
 import { motion } from "framer-motion";
 import { Sparkles, ArrowRight } from "lucide-react";
+import AdSenseUnit from "./AdSenseUnit";
 
 interface LeaderboardProps {
+    /** Google AdSense Slot ID for this leaderboard */
+    slotId?: string;
     /** Show on mobile or hide */
     showOnMobile?: boolean;
     /** Custom class names */
     className?: string;
 }
 
-export default function Leaderboard({ showOnMobile = true, className = "" }: LeaderboardProps) {
+export default function Leaderboard({
+    slotId,
+    showOnMobile = true,
+    className = ""
+}: LeaderboardProps) {
+    const isAdsEnabled = process.env.NEXT_PUBLIC_ENABLE_ADS === "true";
+
+    // If Ads are enabled AND we have a slot ID, showing the real AdSense unit
+    if (isAdsEnabled && slotId) {
+        return (
+            <div className={`w-full ${showOnMobile ? "" : "hidden md:block"} ${className}`}>
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
+                    <div className="min-h-[90px] md:min-h-[120px] bg-gray-50 rounded-2xl md:rounded-3xl border border-gray-100 p-2 flex items-center justify-center overflow-hidden">
+                        <div className="w-full text-center">
+                            <div className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Advertisement</div>
+                            <AdSenseUnit
+                                slotId={slotId}
+                                format="horizontal"
+                                className="w-full flex justify-center"
+                                style={{ display: 'block', minHeight: '90px' }}
+                            />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // FALLBACK / PLACEHOLDER BANNER
     return (
         <div className={`w-full ${showOnMobile ? "" : "hidden md:block"} ${className}`}>
             {/* Outer Container with vertical padding as per PRD */}

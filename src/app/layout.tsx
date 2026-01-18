@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Plus_Jakarta_Sans, Inter } from 'next/font/google';
 import "./globals.css";
 import Navbar from "@/components/Navbar";
@@ -38,9 +39,21 @@ export default function RootLayout({
 }: Readonly<{
     children: React.ReactNode;
 }>) {
+    const adClient = process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_CLIENT_ID;
+
     return (
         <html lang="es" suppressHydrationWarning className={`${plusJakartaSans.variable} ${inter.variable}`}>
             <body className={`${inter.className} bg-background min-h-screen flex flex-col`} suppressHydrationWarning>
+                {/* Google AdSense Script */}
+                {adClient && (
+                    <Script
+                        id="adsbygoogle-init"
+                        strategy="afterInteractive"
+                        src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adClient}`}
+                        crossOrigin="anonymous"
+                    />
+                )}
+
                 {/* GDPR Consent Management */}
                 <ConsentManager />
 

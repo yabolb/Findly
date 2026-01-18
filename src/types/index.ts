@@ -91,6 +91,8 @@ export interface Product {
     platform: Platform;
     category: Category;
     findly_reason?: string; // Template-based justification
+    recipients?: string[]; // Array of recipient tags (pareja, madre, amigos, etc.)
+    occasions?: string[]; // Array of occasion tags (cumpleanos, boda, navidad, etc.)
     created_at: Date;
 }
 

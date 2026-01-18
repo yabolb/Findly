@@ -12,7 +12,7 @@ import {
     BUDGET_LIMITS,
 } from "@/types";
 import { MOCK_PRODUCTS } from "@/lib/mock-data";
-import ProductCard from "./ProductCard";
+import ProductGrid from "./ProductGrid";
 
 interface QuizResultsProps {
     answers: QuizAnswers;
@@ -72,26 +72,6 @@ export default function QuizResults({ answers, onStartOver }: QuizResultsProps) 
         return `Elegimos este regalo porque es perfecto para tu ${relationship} y encaja en tu presupuesto de ${budget}. Ideal para ${occasion}.`;
     };
 
-    const containerVariants = {
-        hidden: { opacity: 0 },
-        visible: {
-            opacity: 1,
-            transition: {
-                staggerChildren: 0.1,
-            },
-        },
-    };
-
-    const itemVariants = {
-        hidden: { opacity: 0, y: 20 },
-        visible: {
-            opacity: 1,
-            y: 0,
-            transition: {
-                duration: 0.4,
-            },
-        },
-    };
 
     return (
         <div className="space-y-8">
@@ -151,23 +131,15 @@ export default function QuizResults({ answers, onStartOver }: QuizResultsProps) 
             </motion.div>
 
             {/* Products Grid */}
-            <motion.div
-                variants={containerVariants}
-                initial="hidden"
-                animate="visible"
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-8"
-            >
-                {recommendedProducts.map((product) => (
-                    <motion.div key={product.id} variants={itemVariants}>
-                        <ProductCard
-                            product={{
-                                ...product,
-                                findly_reason: generateFindlyReason(product),
-                            }}
-                        />
-                    </motion.div>
-                ))}
-            </motion.div>
+            <div className="mt-8">
+                <ProductGrid
+                    products={recommendedProducts.map((product) => ({
+                        ...product,
+                        findly_reason: generateFindlyReason(product),
+                    }))}
+                    hideResultsCount
+                />
+            </div>
 
             {/* Start Over Button */}
             <motion.div
