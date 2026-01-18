@@ -23,7 +23,7 @@ interface LeaderboardProps {
 }
 
 export default function Leaderboard({
-    slotId,
+    slotId = process.env.NEXT_PUBLIC_ADSENSE_LEADERBOARD_SLOT_ID,
     showOnMobile = true,
     className = ""
 }: LeaderboardProps) {
