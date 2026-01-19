@@ -76,7 +76,38 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         console.error('Error fetching popular products for sitemap:', error);
     }
 
-    // 4. Static Legal Pages (when implemented)
+    // 4. El Radar del Regalo Perfecto - Content Marketing
+    try {
+        // Radar index page
+        urls.push({
+            url: `${baseUrl}/radar`,
+            lastModified: currentDate,
+            changeFrequency: 'daily',
+            priority: 0.8,
+        });
+
+        // All published articles
+        const { data: articles } = await supabase
+            .from('articles')
+            .select('slug, updated_at')
+            .eq('is_published', true)
+            .order('published_at', { ascending: false });
+
+        if (articles) {
+            articles.forEach((article) => {
+                urls.push({
+                    url: `${baseUrl}/radar/${article.slug}`,
+                    lastModified: new Date(article.updated_at),
+                    changeFrequency: 'weekly',
+                    priority: 0.8,
+                });
+            });
+        }
+    } catch (error) {
+        console.error('Error fetching articles for sitemap:', error);
+    }
+
+    // 5. Static Legal Pages (when implemented)
     const staticPages = [
         { path: '/takedown', priority: 0.3, changeFrequency: 'monthly' as const },
         { path: '/about', priority: 0.4, changeFrequency: 'monthly' as const },

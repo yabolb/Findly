@@ -12,6 +12,7 @@ interface ProductCardProps {
 
 export default function ProductCard({ product }: ProductCardProps) {
     const [imageLoaded, setImageLoaded] = useState(false);
+    const [imageError, setImageError] = useState(false);
 
     const handleClick = () => {
         window.open(product.source_url, "_blank", "noopener,noreferrer");
@@ -20,6 +21,25 @@ export default function ProductCard({ product }: ProductCardProps) {
     const handleBuyClick = (e: React.MouseEvent) => {
         e.stopPropagation(); // Prevent card click
         window.open(product.source_url, "_blank", "noopener,noreferrer");
+    };
+
+    // Handle image load error with fallback
+    const handleImageError = () => {
+        setImageError(true);
+        setImageLoaded(true); // Mark as loaded to hide skeleton
+    };
+
+    // Callback ref that checks if image is already loaded (cached)
+    const imgRefCallback = (img: HTMLImageElement | null) => {
+        if (img && img.complete) {
+            if (img.naturalWidth > 0) {
+                setImageLoaded(true);
+            } else {
+                // Image failed to load (0 dimensions means error)
+                setImageError(true);
+                setImageLoaded(true);
+            }
+        }
     };
 
     return (
@@ -38,24 +58,24 @@ export default function ProductCard({ product }: ProductCardProps) {
                     )}
 
                     {/* Product Image */}
-                    <img
-                        src={product.image_url}
-                        alt={product.title}
-                        className={`w-full h-full object-cover rounded-2xl p-3 transition-opacity duration-300 ${imageLoaded ? "opacity-100" : "opacity-0"
-                            }`}
-                        onLoad={() => setImageLoaded(true)}
-                        onError={(e) => {
-                            console.error('Image failed to load:', product.image_url);
-                            const target = e.target as HTMLImageElement;
-                            target.style.display = 'none';
-                        }}
-                        loading="lazy"
-                    />
+                    {!imageError && product.image_url && (
+                        <img
+                            ref={imgRefCallback}
+                            src={product.image_url}
+                            alt={product.title}
+                            className={`w-full h-full object-cover rounded-2xl p-3 transition-opacity duration-300 ${imageLoaded ? "opacity-100" : "opacity-0"}`}
+                            onLoad={() => setImageLoaded(true)}
+                            onError={handleImageError}
+                            loading="lazy"
+                        />
+                    )}
 
-                    {/* Fallback gradient if image hasn't loaded */}
-                    <div className={`absolute inset-0 bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center transition-opacity ${imageLoaded ? 'opacity-0' : 'opacity-100'}`}>
-                        <div className="text-6xl opacity-20">🎁</div>
-                    </div>
+                    {/* Fallback when image fails or is missing */}
+                    {(imageError || !product.image_url) && (
+                        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center">
+                            <div className="text-6xl">🎁</div>
+                        </div>
+                    )}
 
                     {/* Glassmorphism Source Badge - Top Right */}
                     <div className="absolute top-5 right-5 px-3 py-1.5 rounded-full backdrop-blur-md bg-white/70 border border-white/40 shadow-lg flex items-center gap-1.5">

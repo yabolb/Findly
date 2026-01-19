@@ -52,6 +52,7 @@ export default function Footer() {
 
     // Column 4: Legal y Findly
     const legalLinks = [
+        { label: "El Radar", href: "/radar" },
         { label: "Sobre Findly", href: "/about" },
         { label: "Política de Privacidad", href: "/privacy" },
         { label: "Términos de Servicio", href: "/terms" },

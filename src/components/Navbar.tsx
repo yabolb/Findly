@@ -30,19 +30,26 @@ export default function Navbar() {
                     {/* Navigation Links */}
                     <div className="hidden md:flex items-center gap-8 flex-shrink-0">
                         <Link
-                            href="/quiz"
+                            href="/radar"
                             className="text-text-main/70 hover:text-primary font-medium transition-colors duration-200 relative group"
                         >
-                            Empezar
+                            El Radar
                             <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-200 group-hover:w-full" />
                         </Link>
-                        <Link
+                        <a
                             href="#como-funciona"
-                            className="text-text-main/70 hover:text-primary font-medium transition-colors duration-200 relative group"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                const element = document.getElementById('como-funciona');
+                                if (element) {
+                                    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                }
+                            }}
+                            className="text-text-main/70 hover:text-primary font-medium transition-colors duration-200 relative group cursor-pointer"
                         >
                             Cómo Funciona
                             <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-200 group-hover:w-full" />
-                        </Link>
+                        </a>
                     </div>
 
                     {/* CTA Button - Always visible */}

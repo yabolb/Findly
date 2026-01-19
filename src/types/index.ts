@@ -162,3 +162,25 @@ export const BUDGET_LIMITS: Record<BudgetRange, { min: number; max: number }> = 
     "50-100": { min: 50, max: 100 },
     "over-100": { min: 100, max: 999999 },
 };
+
+// ============================================
+// CONTENT MARKETING TYPES
+// ============================================
+
+// Article for "El Radar del Regalo Perfecto"
+export interface Article {
+    id: string;
+    slug: string;
+    title: string;
+    excerpt: string;
+    content: string; // Markdown or HTML
+    cover_image: string | null;
+    category_tag: Category | null;
+    published_at: Date;
+    created_at: Date;
+    updated_at: Date;
+    related_products: string[]; // Array of product UUIDs
+    view_count: number;
+    is_published: boolean;
+}
+
