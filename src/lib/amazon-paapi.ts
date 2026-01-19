@@ -4,6 +4,10 @@
  * This service handles all interactions with Amazon's PA-API 5.0.
  * It will remain dormant until credentials are added to .env.local.
  * 
+ * NOTE: The official 'paapi5-nodejs-sdk' causes build issues in Next.js/Webpack
+ * due to dynamic requires. This file currently contains the structure but
+ * avoids importing the broken SDK.
+ * 
  * Required Environment Variables:
  * - AMAZON_ACCESS_KEY
  * - AMAZON_SECRET_KEY
@@ -12,8 +16,6 @@
  * - AMAZON_MARKETPLACE (default: 'www.amazon.es')
  */
 
-import { DefaultApi, SearchItemsRequest, GetItemsRequest, PartnerType, SearchItemsResource, GetItemsResource } from 'paapi5-nodejs-sdk';
-
 // Check if credentials are configured
 export const isAmazonAPIConfigured = (): boolean => {
     return !!(
@@ -21,16 +23,6 @@ export const isAmazonAPIConfigured = (): boolean => {
         process.env.AMAZON_SECRET_KEY &&
         process.env.AMAZON_ASSOCIATE_TAG
     );
-};
-
-// Initialize the PA-API client
-const getAmazonAPIClient = (): DefaultApi | null => {
-    if (!isAmazonAPIConfigured()) {
-        console.warn('Amazon PA-API credentials not configured. Skipping API calls.');
-        return null;
-    }
-
-    return new DefaultApi();
 };
 
 // Map Amazon category to Findly category
@@ -50,7 +42,7 @@ const mapAmazonCategoryToFindly = (browseNode?: string): string => {
     return categoryMap[browseNode || ''] || 'tech-electronics'; // Default fallback
 };
 
-interface AmazonProduct {
+export interface AmazonProduct {
     asin: string;
     title: string;
     price: number;
@@ -68,50 +60,20 @@ export const searchAmazonProducts = async (
     keywords: string,
     maxResults: number = 10
 ): Promise<AmazonProduct[]> => {
-    const client = getAmazonAPIClient();
-    if (!client) {
-        throw new Error('Amazon PA-API not configured. Add credentials to .env.local');
+    if (!isAmazonAPIConfigured()) {
+        console.warn('Amazon PA-API credentials not configured. Skipping API calls.');
+        return [];
     }
 
     try {
-        const searchItemsRequest = new SearchItemsRequest();
-        searchItemsRequest['PartnerTag'] = process.env.AMAZON_ASSOCIATE_TAG!;
-        searchItemsRequest['PartnerType'] = PartnerType.ASSOCIATES;
-        searchItemsRequest['Keywords'] = keywords;
-        searchItemsRequest['ItemCount'] = maxResults;
-        searchItemsRequest['Marketplace'] = process.env.AMAZON_MARKETPLACE || 'www.amazon.es';
-        searchItemsRequest['Resources'] = [
-            SearchItemsResource.ITEMINFOTITLE,
-            SearchItemsResource.OFFERSLISTINGSPRICE,
-            SearchItemsResource.IMAGESPRIMARYLARGE,
-            SearchItemsResource.BROWSENODEINFOBROWSENODES,
-        ];
+        console.log(`Searching Amazon for: ${keywords} (Limit: ${maxResults})`);
 
-        const response = await client.searchItems(searchItemsRequest);
+        // TODO: Implement direct HTTP request to Amazon PA-API here
+        // The 'paapi5-nodejs-sdk' is not compatible with Next.js edge/serverless builds
+        // We will implement a raw fetch() implementation when credentials are proactively available.
 
-        if (!response.SearchResult?.Items) {
-            return [];
-        }
+        return [];
 
-        // Transform Amazon response to our format
-        return response.SearchResult.Items.map((item: any): AmazonProduct => {
-            const price = item.Offers?.Listings?.[0]?.Price?.Amount || 0;
-            const currency = item.Offers?.Listings?.[0]?.Price?.Currency || 'EUR';
-            const imageUrl = item.Images?.Primary?.Large?.URL || '';
-            const title = item.ItemInfo?.Title?.DisplayValue || 'Unknown Product';
-            const browseNode = item.BrowseNodeInfo?.BrowseNodes?.[0]?.DisplayName;
-
-            return {
-                asin: item.ASIN,
-                title,
-                price: parseFloat(price),
-                currency,
-                imageUrl,
-                affiliateUrl: item.DetailPageURL || '',
-                category: mapAmazonCategoryToFindly(browseNode),
-                description: item.ItemInfo?.Features?.DisplayValues?.join(' ') || undefined,
-            };
-        });
     } catch (error: any) {
         console.error('Amazon PA-API Error:', error.message);
         throw new Error(`Failed to search Amazon products: ${error.message}`);
@@ -124,49 +86,17 @@ export const searchAmazonProducts = async (
 export const getAmazonProductsByASIN = async (
     asins: string[]
 ): Promise<AmazonProduct[]> => {
-    const client = getAmazonAPIClient();
-    if (!client) {
-        throw new Error('Amazon PA-API not configured. Add credentials to .env.local');
+    if (!isAmazonAPIConfigured()) {
+        console.warn('Amazon PA-API credentials not configured. Skipping API calls.');
+        return [];
     }
 
     try {
-        const getItemsRequest = new GetItemsRequest();
-        getItemsRequest['PartnerTag'] = process.env.AMAZON_ASSOCIATE_TAG!;
-        getItemsRequest['PartnerType'] = PartnerType.ASSOCIATES;
-        getItemsRequest['ItemIds'] = asins;
-        getItemsRequest['Marketplace'] = process.env.AMAZON_MARKETPLACE || 'www.amazon.es';
-        getItemsRequest['Resources'] = [
-            GetItemsResource.ITEMINFOTITLE,
-            GetItemsResource.OFFERSLISTINGSPRICE,
-            GetItemsResource.IMAGESPRIMARYLARGE,
-            GetItemsResource.BROWSENODEINFOBROWSENODES,
-        ];
+        console.log(`Fetching Amazon ASINs: ${asins.join(', ')}`);
 
-        const response = await client.getItems(getItemsRequest);
+        // TODO: Implement direct HTTP request to Amazon PA-API here
 
-        if (!response.ItemsResult?.Items) {
-            return [];
-        }
-
-        // Transform Amazon response to our format
-        return response.ItemsResult.Items.map((item: any): AmazonProduct => {
-            const price = item.Offers?.Listings?.[0]?.Price?.Amount || 0;
-            const currency = item.Offers?.Listings?.[0]?.Price?.Currency || 'EUR';
-            const imageUrl = item.Images?.Primary?.Large?.URL || '';
-            const title = item.ItemInfo?.Title?.DisplayValue || 'Unknown Product';
-            const browseNode = item.BrowseNodeInfo?.BrowseNodes?.[0]?.DisplayName;
-
-            return {
-                asin: item.ASIN,
-                title,
-                price: parseFloat(price),
-                currency,
-                imageUrl,
-                affiliateUrl: item.DetailPageURL || '',
-                category: mapAmazonCategoryToFindly(browseNode),
-                description: item.ItemInfo?.Features?.DisplayValues?.join(' ') || undefined,
-            };
-        });
+        return [];
     } catch (error: any) {
         console.error('Amazon PA-API Error:', error.message);
         throw new Error(`Failed to get Amazon products: ${error.message}`);
