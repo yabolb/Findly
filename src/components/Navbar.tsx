@@ -45,29 +45,12 @@ export default function Navbar() {
                         </Link>
                     </div>
 
-                    {/* CTA Button */}
-                    <div className="flex items-center gap-4">
-                        <Link href="/quiz" className="hidden sm:block">
-                            <button className="bg-primary hover:bg-primary/90 text-white font-medium px-5 py-2.5 rounded-full transition-all duration-200 hover:shadow-lg">
-                                Empezar Cuestionario
-                            </button>
-                        </Link>
-
-                        {/* Mobile Menu Button */}
-                        <button className="md:hidden p-2 rounded-xl hover:bg-primary/10 transition-colors">
-                            <svg
-                                className="w-6 h-6 text-text-main"
-                                fill="none"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path d="M4 6h16M4 12h16M4 18h16"></path>
-                            </svg>
+                    {/* CTA Button - Always visible */}
+                    <Link href="/quiz">
+                        <button className="bg-primary hover:bg-primary/90 text-white font-medium px-4 sm:px-5 py-2 sm:py-2.5 text-sm sm:text-base rounded-full transition-all duration-200 hover:shadow-lg whitespace-nowrap">
+                            Empezar
                         </button>
-                    </div>
+                    </Link>
                 </div>
             </div>
         </nav>

@@ -13,15 +13,20 @@ import { Gift } from "lucide-react";
  * - Clear legal compliance and affiliate disclosures
  */
 export default function Footer() {
-    // Column 1: Regalos por Interés
+    // Column 1: Regalos por Interés (matching actual Category types)
     const interestLinks = [
         { label: "Tecnología", href: "/results?category=tech-electronics" },
-        { label: "Moda y Estilo", href: "/results?category=fashion" },
+        { label: "Moda y Accesorios", href: "/results?category=fashion" },
         { label: "Deporte y Aire Libre", href: "/results?category=sports-outdoors" },
         { label: "Hogar y Decoración", href: "/results?category=home-garden" },
         { label: "Películas y Series", href: "/results?category=movies" },
         { label: "Libros y Literatura", href: "/results?category=books" },
         { label: "Música y Audio", href: "/results?category=music" },
+        { label: "Bebés y Niños", href: "/results?category=baby-kids" },
+        { label: "Coleccionismo y Arte", href: "/results?category=collectibles-art" },
+        { label: "Bricolaje y Manualidades", href: "/results?category=diy" },
+        { label: "Motor y Accesorios", href: "/results?category=motor-accessories" },
+        { label: "Belleza y Cuidado Personal", href: "/results?category=beauty-personal-care" },
         { label: "Viajes y Experiencias", href: "/results?category=travel-experiences" },
     ];
 
@@ -51,7 +56,6 @@ export default function Footer() {
         { label: "Política de Privacidad", href: "/privacy" },
         { label: "Términos de Servicio", href: "/terms" },
         { label: "Aviso de Cookies", href: "/cookies" },
-        { label: "Contacto / Takedown", href: "/takedown" },
     ];
 
     return (
