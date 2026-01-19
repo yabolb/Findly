@@ -67,6 +67,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                             onLoad={() => setImageLoaded(true)}
                             onError={handleImageError}
                             loading="lazy"
+                            decoding="async"
                         />
                     )}
 

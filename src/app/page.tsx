@@ -11,39 +11,26 @@ export default function Home() {
             <section className="pt-32 pb-20 px-6 lg:px-8">
                 <div className="max-w-4xl mx-auto text-center">
                     {/* Badge */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5 }}
+                    <div
                         className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full mb-6"
                     >
                         <Sparkles className="w-4 h-4 text-primary" />
                         <span className="text-sm font-medium text-primary">
                             Tu asesor de regalos inteligente
                         </span>
-                    </motion.div>
+                    </div>
 
-                    {/* Main Heading */}
-                    <motion.h1
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5, delay: 0.1 }}
-                        className="font-heading text-4xl md:text-6xl lg:text-7xl font-bold text-text-main mb-6 leading-tight"
+                    <h1 className="font-heading text-4xl md:text-6xl lg:text-7xl font-bold text-text-main mb-6 leading-tight"
                     >
                         Encuentra el regalo ideal
                         <br />
                         <span className="text-primary">en 30 segundos</span>
-                    </motion.h1>
+                    </h1>
 
-                    {/* Subheading */}
-                    <motion.p
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5, delay: 0.2 }}
-                        className="text-lg md:text-xl text-text-main/60 mb-10 max-w-2xl mx-auto font-light"
+                    <p className="text-lg md:text-xl text-text-main/60 mb-10 max-w-2xl mx-auto font-light"
                     >
                         Sin listas genéricas. Solo ideas pensadas para esa persona especial.
-                    </motion.p>
+                    </p>
 
                     {/* CTA Button */}
                     <motion.div
@@ -163,6 +150,6 @@ export default function Home() {
                     </div>
                 </div>
             </section>
-        </main>
+        </main >
     );
 }
