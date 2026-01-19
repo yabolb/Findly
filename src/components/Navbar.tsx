@@ -55,7 +55,7 @@ export default function Navbar() {
                     {/* CTA Button - Always visible */}
                     <Link href="/quiz">
                         <button className="bg-primary hover:bg-primary/90 text-white font-medium px-4 sm:px-5 py-2 sm:py-2.5 text-sm sm:text-base rounded-full transition-all duration-200 hover:shadow-lg whitespace-nowrap">
-                            Empezar
+                            Encontrar regalo
                         </button>
                     </Link>
                 </div>
