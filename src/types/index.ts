@@ -3,13 +3,15 @@
 // Market: Spain | Language: Spanish | Currency: EUR
 // ========================================
 
-// 11 Gift Categories (PRD v12.0 Section 4 - Step 3 Interests)
+// 13 Gift Categories (Updated for better granularity)
 export type Category =
     | "tech-electronics"       // Tecnología
     | "fashion"                // Moda y Accesorios
-    | "sports-leisure"         // Deporte y Ocio
+    | "sports-outdoors"        // Deporte y Aire Libre
     | "home-garden"            // Hogar y Decoración
-    | "movies-books-music"     // Cultura: Libros, Cine, Música
+    | "movies"                 // Películas y Series
+    | "books"                  // Libros y Literatura
+    | "music"                  // Música y Audio
     | "baby-kids"              // Bebés y Niños
     | "collectibles-art"       // Coleccionismo y Arte
     | "diy"                    // Bricolaje y Manualidades
@@ -103,9 +105,11 @@ export interface Product {
 export const CATEGORY_LABELS: Record<Category, string> = {
     "tech-electronics": "Tecnología",
     "fashion": "Moda y Accesorios",
-    "sports-leisure": "Deporte y Ocio",
+    "sports-outdoors": "Deporte y Aire Libre",
     "home-garden": "Hogar y Decoración",
-    "movies-books-music": "Cultura",
+    "movies": "Películas y Series",
+    "books": "Libros y Literatura",
+    "music": "Música y Audio",
     "baby-kids": "Bebés y Niños",
     "collectibles-art": "Coleccionismo y Arte",
     "diy": "Bricolaje y Manualidades",

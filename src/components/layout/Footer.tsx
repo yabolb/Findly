@@ -17,9 +17,11 @@ export default function Footer() {
     const interestLinks = [
         { label: "Tecnología", href: "/results?category=tech-electronics" },
         { label: "Moda y Estilo", href: "/results?category=fashion" },
-        { label: "Deporte y Aire Libre", href: "/results?category=sports-leisure" },
+        { label: "Deporte y Aire Libre", href: "/results?category=sports-outdoors" },
         { label: "Hogar y Decoración", href: "/results?category=home-garden" },
-        { label: "Lectura y Cultura", href: "/results?category=movies-books-music" },
+        { label: "Películas y Series", href: "/results?category=movies" },
+        { label: "Libros y Literatura", href: "/results?category=books" },
+        { label: "Música y Audio", href: "/results?category=music" },
         { label: "Viajes y Experiencias", href: "/results?category=travel-experiences" },
     ];
 

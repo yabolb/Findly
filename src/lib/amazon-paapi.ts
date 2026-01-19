@@ -39,9 +39,11 @@ const mapAmazonCategoryToFindly = (browseNode?: string): string => {
     const categoryMap: Record<string, string> = {
         'Electronics': 'tech-electronics',
         'Fashion': 'fashion',
-        'Sports': 'sports-leisure',
+        'Sports': 'sports-outdoors',
         'Home': 'home-garden',
-        'Books': 'movies-books-music',
+        'Books': 'books',
+        'Movies': 'movies',
+        'Music': 'music',
         'Outdoors': 'travel-experiences',
     };
 
