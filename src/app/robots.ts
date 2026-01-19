@@ -9,7 +9,7 @@ import { MetadataRoute } from 'next';
  * - Reference sitemap for efficient crawling
  */
 export default function robots(): MetadataRoute.Robots {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://findly.com';
+    const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || 'https://findly.com').trim().replace(/\/$/, '');
 
     return {
         rules: [
