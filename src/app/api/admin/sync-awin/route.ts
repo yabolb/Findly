@@ -30,9 +30,14 @@ export async function POST(request: Request) {
         return NextResponse.json({ success: true, message: 'Awin sync completed successfully' });
     } catch (error: any) {
         console.error('Awin Sync Error:', error);
+
         return NextResponse.json(
             { success: false, error: error.message || 'Internal Server Error' },
             { status: 500 }
         );
     }
+}
+
+export async function GET(request: Request) {
+    return POST(request);
 }
