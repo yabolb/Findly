@@ -49,7 +49,7 @@ export default function RootLayout({
                 {adClient && (
                     <Script
                         id="adsbygoogle-init"
-                        strategy="afterInteractive"
+                        strategy="lazyOnload"
                         src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adClient}`}
                         crossOrigin="anonymous"
                     />

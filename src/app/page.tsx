@@ -1,6 +1,3 @@
-"use client";
-
-import { motion } from "framer-motion";
 import { Gift, Sparkles, Heart, Clock } from "lucide-react";
 import Link from "next/link";
 
@@ -11,33 +8,25 @@ export default function Home() {
             <section className="pt-32 pb-20 px-6 lg:px-8">
                 <div className="max-w-4xl mx-auto text-center">
                     {/* Badge */}
-                    <div
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full mb-6"
-                    >
+                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full mb-6">
                         <Sparkles className="w-4 h-4 text-primary" />
                         <span className="text-sm font-medium text-primary">
                             Tu asesor de regalos inteligente
                         </span>
                     </div>
 
-                    <h1 className="font-heading text-4xl md:text-6xl lg:text-7xl font-bold text-text-main mb-6 leading-tight"
-                    >
+                    <h1 className="font-heading text-4xl md:text-6xl lg:text-7xl font-bold text-text-main mb-6 leading-tight">
                         Encuentra el regalo ideal
                         <br />
                         <span className="text-primary">en 30 segundos</span>
                     </h1>
 
-                    <p className="text-lg md:text-xl text-text-main/60 mb-10 max-w-2xl mx-auto font-light"
-                    >
+                    <p className="text-lg md:text-xl text-text-main/60 mb-10 max-w-2xl mx-auto font-light">
                         Sin listas genéricas. Solo ideas pensadas para esa persona especial.
                     </p>
 
-                    {/* CTA Button */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5, delay: 0.3 }}
-                    >
+                    {/* CTA Button - Now static with CSS animations */}
+                    <div className="animate-fade-in-up">
                         <Link href="/quiz">
                             <button className="group relative inline-flex items-center gap-3 bg-primary hover:bg-primary/90 text-white font-semibold text-lg px-10 py-5 rounded-full shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
                                 {/* Pulsing ring effect */}
@@ -47,15 +36,10 @@ export default function Home() {
                                 <span>Empezar Cuestionario</span>
                             </button>
                         </Link>
-                    </motion.div>
+                    </div>
 
-                    {/* Trust indicators */}
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ duration: 0.5, delay: 0.5 }}
-                        className="mt-12 flex flex-wrap justify-center gap-8 text-sm text-text-main/50"
-                    >
+                    {/* Trust indicators - Static */}
+                    <div className="mt-12 flex flex-wrap justify-center gap-8 text-sm text-text-main/50 animate-fade-in">
                         <div className="flex items-center gap-2">
                             <Clock className="w-4 h-4" />
                             <span>Solo 4 preguntas</span>
@@ -68,27 +52,21 @@ export default function Home() {
                             <Sparkles className="w-4 h-4" />
                             <span>100% gratuito</span>
                         </div>
-                    </motion.div>
+                    </div>
                 </div>
             </section>
 
             {/* Features Section */}
             <section id="como-funciona" className="py-20 px-6 lg:px-8 bg-white/50">
                 <div className="max-w-6xl mx-auto">
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.5 }}
-                        className="text-center mb-16"
-                    >
+                    <div className="text-center mb-16">
                         <h2 className="font-heading text-3xl md:text-4xl font-bold text-text-main mb-4">
                             ¿Cómo funciona?
                         </h2>
                         <p className="text-text-main/60 max-w-xl mx-auto">
                             Tres simples pasos para encontrar el regalo perfecto
                         </p>
-                    </motion.div>
+                    </div>
 
                     <div className="grid md:grid-cols-3 gap-8">
                         {[
@@ -110,13 +88,9 @@ export default function Home() {
                                 description: "3-5 regalos perfectos con explicación de por qué.",
                                 icon: "🎁",
                             },
-                        ].map((feature, index) => (
-                            <motion.div
+                        ].map((feature) => (
+                            <div
                                 key={feature.step}
-                                initial={{ opacity: 0, y: 20 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ duration: 0.5, delay: index * 0.1 }}
                                 className="bg-white rounded-3xl p-8 shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100"
                             >
                                 <div className="text-5xl mb-4">{feature.icon}</div>
@@ -129,7 +103,7 @@ export default function Home() {
                                 <p className="text-text-main/60">
                                     {feature.description}
                                 </p>
-                            </motion.div>
+                            </div>
                         ))}
                     </div>
                 </div>
@@ -150,6 +124,6 @@ export default function Home() {
                     </div>
                 </div>
             </section>
-        </main >
+        </main>
     );
 }
