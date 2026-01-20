@@ -58,6 +58,8 @@ function StatCard({
 export default function AdminStatusPage() {
     const [stats, setStats] = useState<CatalogStats | null>(null);
     const [products, setProducts] = useState<Product[]>([]);
+    const [syncLogs, setSyncLogs] = useState<any[]>([]);
+    const [isSyncing, setIsSyncing] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
 
@@ -96,6 +98,17 @@ export default function AdminStatusPage() {
                 byPlatform: byPlatform as Record<Platform, number>,
                 avgPrice: productList.length > 0 ? Math.round(totalPrice / productList.length) : 0,
             });
+
+            // Fetch Sync Logs
+            const { data: logs, error: logsError } = await supabase
+                .from("sync_logs")
+                .select("*")
+                .order("created_at", { ascending: false })
+                .limit(10);
+
+            if (!logsError && logs) {
+                setSyncLogs(logs);
+            }
 
             setLastRefresh(new Date());
         } catch (error) {
@@ -150,6 +163,34 @@ export default function AdminStatusPage() {
                                     />
                                 </svg>
                                 Actualizar
+                            </button>
+
+                            <button
+                                onClick={async () => {
+                                    setIsSyncing(true);
+                                    try {
+                                        const res = await fetch("/api/admin/sync-awin", { method: "POST" });
+                                        if (res.ok) {
+                                            alert("Sync started successfully!");
+                                            fetchCatalogData();
+                                        } else {
+                                            alert("Sync failed to start.");
+                                        }
+                                    } catch (e) {
+                                        console.error(e);
+                                        alert("Error triggering sync.");
+                                    } finally {
+                                        setIsSyncing(false);
+                                    }
+                                }}
+                                disabled={isSyncing}
+                                className="
+                                    px-4 py-2 bg-indigo-600 text-white text-sm font-medium
+                                    rounded-xl hover:bg-indigo-700 transition-colors
+                                    disabled:opacity-50 disabled:cursor-not-allowed
+                                "
+                            >
+                                {isSyncing ? "Syncing..." : "Sync Awin (Beta)"}
                             </button>
 
                             {/* Logout Button */}
@@ -234,6 +275,50 @@ export default function AdminStatusPage() {
                             {stats?.avgPrice || 0}€
                         </p>
                     </motion.div>
+                </div>
+
+                {/* Sync Status Panel */}
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/60 mb-8">
+                    <h2 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                        <span>🔄</span> Estado de Sincronización (Awin)
+                    </h2>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                            <thead className="bg-slate-50 border-b border-slate-100">
+                                <tr>
+                                    <th className="px-4 py-3 text-left font-medium text-slate-500">Plataforma</th>
+                                    <th className="px-4 py-3 text-left font-medium text-slate-500">Estado</th>
+                                    <th className="px-4 py-3 text-left font-medium text-slate-500">Items (Total/Nuevos)</th>
+                                    <th className="px-4 py-3 text-left font-medium text-slate-500">Fecha</th>
+                                    <th className="px-4 py-3 text-left font-medium text-slate-500">Mensaje</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {syncLogs.length > 0 ? syncLogs.map((log) => (
+                                    <tr key={log.id} className="hover:bg-slate-50">
+                                        <td className="px-4 py-3 font-medium text-slate-900">{log.platform}</td>
+                                        <td className="px-4 py-3">
+                                            <span className={`
+                                                inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                                ${log.status === 'success' ? 'bg-green-100 text-green-800' :
+                                                    log.status === 'error' ? 'bg-red-100 text-red-800' :
+                                                        'bg-blue-100 text-blue-800'}
+                                            `}>
+                                                {log.status}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-3 text-slate-600">{log.items_found} / {log.items_added}</td>
+                                        <td className="px-4 py-3 text-slate-500">{new Date(log.created_at).toLocaleString('es-ES')}</td>
+                                        <td className="px-4 py-3 text-slate-500 truncate max-w-xs" title={log.error_message}>{log.error_message || '-'}</td>
+                                    </tr>
+                                )) : (
+                                    <tr>
+                                        <td colSpan={5} className="px-4 py-8 text-center text-slate-500">No hay registros de sincronización recientes.</td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
                 {/* Category Breakdown */}
