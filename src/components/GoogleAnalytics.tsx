@@ -5,7 +5,7 @@ import Script from 'next/script';
 export default function GoogleAnalytics() {
     const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 
-    if (!GA_MEASUREMENT_ID) {
+    if (!GA_MEASUREMENT_ID || process.env.NODE_ENV !== 'production') {
         return null;
     }
 
