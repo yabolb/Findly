@@ -9,7 +9,8 @@ export const metadata: Metadata = {
     keywords: ['blog de regalos', 'ideas de regalo', 'tendencias', 'inspiración', 'guías de regalo'],
 };
 
-export const revalidate = 3600; // Revalidate every hour
+// export const revalidate = 0; // Disable ISR for now to force updates
+export const dynamic = 'force-dynamic'; // Force dynamic rendering
 
 export default async function RadarPage() {
     const articles = await getPublishedArticles();
