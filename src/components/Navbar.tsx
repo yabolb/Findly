@@ -2,10 +2,13 @@
 
 import Link from "next/link";
 import { Gift } from "lucide-react";
+import { usePathname } from "next/navigation";
 import { useScrollPosition } from "@/hooks/useScrollPosition";
 
 export default function Navbar() {
     const { scrollY } = useScrollPosition();
+    const pathname = usePathname();
+    const isHome = pathname === "/";
     const isNavBackgroundVisible = scrollY > 10;
 
     return (
@@ -29,6 +32,29 @@ export default function Navbar() {
 
                     {/* Navigation Links */}
                     <div className="hidden md:flex items-center gap-8 flex-shrink-0">
+                        {isHome && (
+                            <a
+                                href="#como-funciona"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    const element = document.getElementById('como-funciona');
+                                    if (element) {
+                                        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                    }
+                                }}
+                                className="text-text-main/70 hover:text-primary font-medium transition-colors duration-200 relative group cursor-pointer"
+                            >
+                                Cómo Funciona
+                                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-200 group-hover:w-full" />
+                            </a>
+                        )}
+                        <Link
+                            href="/all-gifts"
+                            className="text-text-main/70 hover:text-primary font-medium transition-colors duration-200 relative group"
+                        >
+                            Todos los regalos
+                            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-200 group-hover:w-full" />
+                        </Link>
                         <Link
                             href="/radar"
                             className="text-text-main/70 hover:text-primary font-medium transition-colors duration-200 relative group"
@@ -36,20 +62,6 @@ export default function Navbar() {
                             El Radar
                             <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-200 group-hover:w-full" />
                         </Link>
-                        <a
-                            href="#como-funciona"
-                            onClick={(e) => {
-                                e.preventDefault();
-                                const element = document.getElementById('como-funciona');
-                                if (element) {
-                                    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                }
-                            }}
-                            className="text-text-main/70 hover:text-primary font-medium transition-colors duration-200 relative group cursor-pointer"
-                        >
-                            Cómo Funciona
-                            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-200 group-hover:w-full" />
-                        </a>
                     </div>
 
                     {/* CTA Button - Always visible */}

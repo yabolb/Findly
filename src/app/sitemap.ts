@@ -29,10 +29,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         priority: 1.0,
     });
 
-    // 2. All Category Pages - High priority
+    // 2. All Gifts & Category Pages - High priority
+    urls.push({
+        url: `${baseUrl}/all-gifts`,
+        lastModified: currentDate,
+        changeFrequency: 'daily',
+        priority: 0.95,
+    });
+
     Object.keys(CATEGORY_LABELS).forEach((category) => {
         urls.push({
-            url: `${baseUrl}/search?category=${category}`,
+            url: `${baseUrl}/all-gifts?category=${category}`,
             lastModified: currentDate,
             changeFrequency: 'daily',
             priority: 0.9,
@@ -64,7 +71,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
                     uniqueQueries.add(query);
 
                     urls.push({
-                        url: `${baseUrl}/search?q=${encodeURIComponent(query)}`,
+                        url: `${baseUrl}/all-gifts?q=${encodeURIComponent(query)}`,
                         lastModified: new Date(product.created_at),
                         changeFrequency: 'weekly',
                         priority: 0.7,

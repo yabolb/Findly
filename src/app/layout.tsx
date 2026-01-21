@@ -27,6 +27,17 @@ export const metadata: Metadata = {
     description: "Encuentra el regalo perfecto en 30 segundos. Recomendaciones personalizadas para cualquier ocasión. Sin listas genéricas, solo ideas pensadas para esa persona especial.",
     keywords: ["regalos personalizados", "ideas de regalo", "regalos España", "cuestionario de regalos", "regalos originales"],
     metadataBase: new URL('https://getfindly.com'),
+    robots: {
+        index: true,
+        follow: true,
+        googleBot: {
+            index: true,
+            follow: true,
+            'max-video-preview': -1,
+            'max-image-preview': 'large',
+            'max-snippet': -1,
+        },
+    },
     openGraph: {
         title: "Findly - Tu Asesor de Regalos Inteligente",
         description: "Encuentra el regalo perfecto en 30 segundos. Recomendaciones personalizadas para cualquier ocasión.",

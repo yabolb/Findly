@@ -3,6 +3,9 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
     title: 'Política de Cookies | Findly',
     description: 'Política de Cookies de Findly - Información sobre el uso de cookies, tipos y cómo gestionarlas.',
+    alternates: {
+        canonical: '/cookies',
+    },
 };
 
 export default function CookiesPage() {

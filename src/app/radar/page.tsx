@@ -7,6 +7,15 @@ export const metadata: Metadata = {
     title: 'El Radar del Regalo Perfecto | Findly',
     description: 'Inspiración diaria, tendencias y hallazgos para acertar siempre. Descubre ideas originales y consejos para regalar como un experto.',
     keywords: ['blog de regalos', 'ideas de regalo', 'tendencias', 'inspiración', 'guías de regalo'],
+    alternates: {
+        canonical: '/radar',
+    },
+    openGraph: {
+        title: 'El Radar del Regalo Perfecto | Findly',
+        description: 'Tendencias, guías y consejos para regalar.',
+        url: '/radar',
+        type: 'website',
+    },
 };
 
 // export const revalidate = 0; // Disable ISR for now to force updates

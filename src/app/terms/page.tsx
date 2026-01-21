@@ -3,6 +3,9 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
     title: 'Términos y Condiciones | Findly',
     description: 'Términos y Condiciones de Uso de Findly - Información sobre el uso del servicio, enlaces de afiliados y responsabilidades.',
+    alternates: {
+        canonical: '/terms',
+    },
 };
 
 export default function TermsPage() {

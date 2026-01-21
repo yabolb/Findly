@@ -1,6 +1,16 @@
 import { Gift, Sparkles, Heart, Clock } from "lucide-react";
 import Link from "next/link";
 
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+    title: "Findly | El Buscador de Regalos Inteligente",
+    description: "Encuentra el regalo ideal en segundos. Nuestro asesor con IA te ayuda a elegir regalos personalizados para cualquier persona y ocasión.",
+    alternates: {
+        canonical: '/',
+    },
+};
+
 export default function Home() {
     return (
         <main className="min-h-screen">

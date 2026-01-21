@@ -3,6 +3,9 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
     title: 'Política de Privacidad | Findly',
     description: 'Política de Privacidad de Findly - Información sobre cómo recopilamos, utilizamos y protegemos tus datos personales en cumplimiento con RGPD y LOPD-GDD.',
+    alternates: {
+        canonical: '/privacy',
+    },
 };
 
 export default function PrivacyPage() {
