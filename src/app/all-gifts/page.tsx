@@ -15,9 +15,11 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
     let description = 'Descubre nuestra selección completa de regalos originales para cualquier ocasión, presupuesto y persona. Filtra por categoría y encuentra el detalle perfecto.';
     let canonical = `${baseUrl}/all-gifts`;
 
-    if (category && CATEGORY_LABELS[category as Category]) {
-        title = `Regalos de ${CATEGORY_LABELS[category as Category]} | Findly`;
-        description = `Encuentra los mejores regalos de ${CATEGORY_LABELS[category as Category].toLowerCase()}. Selección curada de ideas originales al mejor precio.`;
+    const labels: Record<string, string> = CATEGORY_LABELS;
+
+    if (category && labels[category]) {
+        title = `Regalos de ${labels[category]} | Findly`;
+        description = `Encuentra los mejores regalos de ${labels[category].toLowerCase()}. Selección curada de ideas originales al mejor precio.`;
         canonical += `?category=${category}`;
     } else if (q) {
         title = `Resultados para "${q}" | Findly`;

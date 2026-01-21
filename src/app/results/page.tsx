@@ -54,9 +54,11 @@ export async function generateMetadata({ searchParams }: ResultsPageProps): Prom
     let description = "Descubre regalos originales para cualquier ocasión.";
     let canonical = '/results';
 
-    if (category && CATEGORY_LABELS[category as any]) {
-        title = `Regalos de ${CATEGORY_LABELS[category as any]} | Findly`;
-        description = `Explora nuestra selección de ${CATEGORY_LABELS[category as any].toLowerCase()}. Ideas originales al mejor precio.`;
+    const labels: Record<string, string> = CATEGORY_LABELS;
+
+    if (category && labels[category]) {
+        title = `Regalos de ${labels[category]} | Findly`;
+        description = `Explora nuestra selección de ${labels[category].toLowerCase()}. Ideas originales al mejor precio.`;
         canonical += `?category=${category}`;
     } else if (recipient && RECIPIENT_LABELS[recipient]) {
         title = `Regalos para ${RECIPIENT_LABELS[recipient]} | Findly`;
