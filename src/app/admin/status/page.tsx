@@ -359,6 +359,7 @@ export default function AdminStatusPage() {
                         >
                             <option value="all">Todas las plataformas</option>
                             <option value="awin">Awin (General)</option>
+                            <option value="amazon">Amazon</option>
                             <option value="el corte ingles">El Corte Inglés</option>
                             <option value="wallapop">Wallapop</option>
                             <option value="vinted">Vinted</option>
