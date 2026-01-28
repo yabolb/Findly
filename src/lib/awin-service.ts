@@ -226,10 +226,13 @@ export class AwinService {
         if (text.match(/\b(shirt|dress|jeans|jacket|sneakers|shoes|bag|watch|ropa|camiseta|vestido|zapatos|bolso|reloj|joya)\b/)) return 'fashion';
         if (text.match(/\b(sofa|chair|table|lamp|bed|furniture|home|hogar|mueble|mesa|decoracion)\b/)) return 'home-garden';
         if (text.match(/\b(bike|bicycle|gym|fitness|yoga|sports|deporte|bici|gimnasio|futbol|tenis)\b/)) return 'sports-outdoors';
-        if (text.match(/\b(toy|lego|doll|baby|juguete|bebe|nino|nina)\b/)) return 'baby-kids';
+
+        // Media comes before Baby-Kids to catch CDs/Books for children correctly
         if (text.match(/\b(book|libro|novela|comic)\b/)) return 'books';
         if (text.match(/\b(cd|vinyl|music|album|musica|disco)\b/)) return 'music';
         if (text.match(/\b(dvd|movie|pelicula|cine)\b/)) return 'movies';
+
+        if (text.match(/\b(toy|lego|doll|baby|juguete|bebe|nino|nina|infantil)\b/)) return 'baby-kids';
         if (text.match(/\b(art|painting|collectible|arte|pintura|coleccion)\b/)) return 'collectibles-art';
         if (text.match(/\b(makeup|maquillaje|perfume|crema|beauty|belleza)\b/)) return 'beauty-personal-care';
 
