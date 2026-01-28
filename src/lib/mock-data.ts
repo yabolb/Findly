@@ -5,8 +5,11 @@ export const PLATFORM_LOGOS: Record<Platform, string> = {
     amazon: "🛒",
     etsy: "🎨",
     elcorteingles: "🏬",
+    elcorteingleses: "🏬",
     fnac: "📚",
+    fnaces: "📚",
     decathlon: "⚽",
+    decathlones: "⚽",
 };
 
 // Platform display names
@@ -14,8 +17,11 @@ export const PLATFORM_NAMES: Record<Platform, string> = {
     amazon: "Amazon",
     etsy: "Etsy",
     elcorteingles: "El Corte Inglés",
+    elcorteingleses: "El Corte Inglés",
     fnac: "Fnac",
+    fnaces: "Fnac",
     decathlon: "Decathlon",
+    decathlones: "Decathlon",
 };
 
 // Category icons for quiz chips

@@ -5,6 +5,9 @@ import { parse } from 'csv-parse';
 import unzip from 'unzip-stream';
 import { pipeline } from 'stream/promises';
 import { Readable } from 'stream';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
 
 // Start of Selection
 // const supabase = createClient();
@@ -143,6 +146,24 @@ export class AwinService {
         return `https://productdata.awin.com/datafeed/download/apikey/${apiKey}/language/any/fid/${feedId}/columns/${columns}/format/csv/compression/zip`;
     }
 
+    /**
+     * Clean up stale 'running' logs for a specific platform
+     */
+    async cleanupStaleLogs(platform: string) {
+        try {
+            await supabase
+                .from('sync_logs')
+                .update({
+                    status: 'error',
+                    error_message: 'Interrupted by new sync or timeout'
+                })
+                .eq('platform', platform)
+                .eq('status', 'running');
+        } catch (error) {
+            console.error(`Error cleaning up stale logs for ${platform}:`, error);
+        }
+    }
+
     mapCategory(rawCategory: string, productName: string): string | null {
         // 1. Try Direct Mapping from Merchant Category
         // This is much more reliable than guessing from the product name.
@@ -194,29 +215,33 @@ export class AwinService {
     /**
      * Download and process the feed for a specific advertiser
      */
-    async downloadAndProcessFeed(feedUrl: string, advertiserId: number, advertiserName: string): Promise<{ processed: number; added: number; skipped: number; errors: number }> {
+    async downloadAndProcessFeed(feedUrl: string, advertiserId: number, advertiserName: string, logId?: string): Promise<{ processed: number; added: number; skipped: number; errors: number }> {
         let stats = { processed: 0, added: 0, skipped: 0, errors: 0 };
+        const tempDir = os.tmpdir();
+        const tempZip = path.join(tempDir, `awin_feed_${advertiserId}_${Date.now()}.zip`);
 
-        console.log(`Starting sync for ${advertiserName} (${advertiserId})...`);
+        console.log(`Starting robust sync for ${advertiserName} (${advertiserId})...`);
 
         try {
+            // 1. Download to local file (Robust approach)
+            console.log(`⬇️ Downloading feed to ${tempZip}...`);
             const response = await fetch(feedUrl);
             if (!response.ok || !response.body) {
                 throw new Error(`Failed to download feed: ${response.statusText}`);
             }
 
-            // Create a NodeJS Readable stream from the Web Stream
+            const fileStream = fs.createWriteStream(tempZip);
             // @ts-ignore
-            const nodeStream = Readable.fromWeb(response.body);
+            await pipeline(Readable.fromWeb(response.body), fileStream);
+            console.log(`✅ Download complete (${advertiserName})`);
 
-            // Streaming pipeline: Download -> Unzip -> Parse CSV -> Process Row
-            await pipeline(
-                nodeStream,
-                // @ts-ignore
-                unzip.Parse(),
-                async function* (source: any) {
-                    for await (const entry of source) {
+            // 2. Process the local file
+            await new Promise<void>((resolve, reject) => {
+                fs.createReadStream(tempZip)
+                    .pipe(unzip.Parse())
+                    .on('entry', async (entry) => {
                         if (entry.path.endsWith('.csv')) {
+                            console.log(`📄 Processing CSV: ${entry.path}`);
                             const parser = entry.pipe(parse({
                                 columns: true,
                                 skip_empty_lines: true,
@@ -224,66 +249,82 @@ export class AwinService {
                                 relax_quotes: true
                             }));
 
-                            for await (const record of parser) {
-                                stats.processed++;
+                            try {
+                                for await (const record of parser) {
+                                    stats.processed++;
 
-                                try {
-                                    const service = new AwinService();
-                                    const category = service.mapCategory(record.merchant_category || '', record.product_name || '');
+                                    try {
+                                        const category = this.mapCategory(record.merchant_category || '', record.product_name || '');
 
-                                    if (!category) {
-                                        stats.skipped++;
-                                        continue;
+                                        if (!category) {
+                                            stats.skipped++;
+                                            continue;
+                                        }
+
+                                        const price = parseFloat(record.search_price);
+                                        if (isNaN(price)) {
+                                            stats.skipped++;
+                                            continue;
+                                        }
+
+                                        const platformKey = advertiserName.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+                                        const productData = {
+                                            title: record.product_name,
+                                            description: record.description,
+                                            price: price,
+                                            currency: record.currency || 'EUR',
+                                            image_url: record.merchant_image_url,
+                                            source_url: record.aw_deep_link,
+                                            platform: platformKey,
+                                            source_network: 'awin',
+                                            category: category,
+                                            condition: 'new',
+                                        };
+
+                                        await supabase
+                                            .from('products')
+                                            .upsert({
+                                                ...productData,
+                                                updated_at: new Date().toISOString()
+                                            }, { onConflict: 'source_url' });
+
+                                        stats.added++;
+
+                                        // Periodic log update (every 100 items - more frequent for better UX)
+                                        if (logId && stats.processed % 100 === 0) {
+                                            await supabase
+                                                .from('sync_logs')
+                                                .update({
+                                                    items_found: stats.processed,
+                                                    items_added: stats.added
+                                                })
+                                                .eq('id', logId);
+                                        }
+
+                                    } catch (err) {
+                                        stats.errors++;
                                     }
-
-                                    const price = parseFloat(record.search_price);
-                                    if (isNaN(price)) {
-                                        stats.skipped++; // Skip invalid price
-                                        continue;
-                                    }
-
-                                    const platformKey = advertiserName.toLowerCase().replace(/[^a-z0-9]/g, '');
-
-                                    const productData = {
-                                        title: record.product_name,
-                                        description: record.description,
-                                        price: price,
-                                        currency: record.currency || 'EUR',
-                                        image_url: record.merchant_image_url,
-                                        source_url: record.aw_deep_link, // TRACKING LINK
-                                        platform: platformKey, // e.g. 'fnaces'
-                                        source_network: 'awin',
-                                        category: category,
-                                        condition: 'new',
-                                    };
-
-                                    // Insert into Supabase (upsert)
-                                    await supabase
-                                        .from('products')
-                                        .upsert({
-                                            ...productData,
-                                            // Ensure we update fields if it exists
-                                            updated_at: new Date().toISOString()
-                                        }, { onConflict: 'source_url' });
-
-                                    stats.added++;
-
-                                } catch (err) {
-                                    stats.errors++;
-                                    // console.error('Error processing row:', err); // Reduce log noise
                                 }
+                                resolve();
+                            } catch (err) {
+                                reject(err);
                             }
                         } else {
                             entry.autodrain();
                         }
-                    }
-                }
-            );
+                    })
+                    .on('error', reject)
+                    .on('close', resolve);
+            });
 
         } catch (error) {
             console.error(`Error processing feed for ${advertiserName}:`, error);
-            // Don't throw entire failure if one feed fails, but maybe log it?
-            // throw error; 
+        } finally {
+            // Clean up temp file
+            if (fs.existsSync(tempZip)) {
+                try { fs.unlinkSync(tempZip); } catch (e) { }
+            }
         }
 
         return stats;
@@ -313,28 +354,42 @@ export class AwinService {
                 const feedUrl = this.getFeedUrl(feedId);
 
                 try {
-                    // Log start
-                    await supabase.from('sync_logs').insert({
-                        platform: `awin-${partner.name}`,
-                        status: 'running',
-                        items_found: 0,
-                        items_added: 0
-                    });
+                    // 1. Cleanup old running logs for this platform
+                    const platformName = `awin-${partner.name}`;
+                    await this.cleanupStaleLogs(platformName);
 
-                    const stats = await this.downloadAndProcessFeed(feedUrl, partner.id, partner.name);
+                    // 2. Log start and capture ID
+                    const { data: logEntry, error: logError } = await supabase
+                        .from('sync_logs')
+                        .insert({
+                            platform: platformName,
+                            status: 'running',
+                            items_found: 0,
+                            items_added: 0
+                        })
+                        .select()
+                        .single();
 
-                    // Log success
-                    await supabase.from('sync_logs').insert({
-                        platform: `awin-${partner.name}`,
-                        status: 'success',
-                        items_found: stats.processed,
-                        items_added: stats.added,
-                        error_message: stats.errors > 0 ? `${stats.errors} row errors` : null
-                    });
+                    const logId = logEntry?.id;
+
+                    const stats = await this.downloadAndProcessFeed(feedUrl, partner.id, partner.name, logId);
+
+                    // Update existing log with final stats
+                    if (logId) {
+                        await supabase
+                            .from('sync_logs')
+                            .update({
+                                status: 'success',
+                                items_found: stats.processed,
+                                items_added: stats.added,
+                                error_message: stats.errors > 0 ? `${stats.errors} row errors` : null
+                            })
+                            .eq('id', logId);
+                    }
 
                 } catch (err: any) {
                     console.error(`Failed sync for ${partner.name}:`, err);
-                    // Log failure
+                    // Log failure - This might need to update the existing log if logId exists
                     await supabase.from('sync_logs').insert({
                         platform: `awin-${partner.name}`,
                         status: 'error',

@@ -25,9 +25,13 @@ export async function POST(request: Request) {
 
         // However, for the user to see immediate feedback in the "Test" phase, let's await it.
         // WARNING: Might timeout if many feeds. 
-        await awinService.syncProducts();
+        // Run sync in background to avoid TIMEOUTS
+        // We trigger it and return "Started"
+        awinService.syncProducts().catch(err => {
+            console.error('Background Awin Sync Error:', err);
+        });
 
-        return NextResponse.json({ success: true, message: 'Awin sync completed successfully' });
+        return NextResponse.json({ success: true, message: 'Awin sync started in background' });
     } catch (error: any) {
         console.error('Awin Sync Error:', error);
 

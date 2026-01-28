@@ -23,9 +23,12 @@ export type Category =
 export type Platform =
     | "amazon"         // Amazon Associates (Generalist)
     | "etsy"           // Etsy via Awin (Handmade/Craft)
-    | "elcorteingles"  // El Corte Inglés via Awin (Premium)
+    | "elcorteingles"  // El Corte Inglés via Awin (Legacy/Mock)
+    | "elcorteingleses" // El Corte Inglés via Awin (Live)
     | "fnac"           // Fnac via Awin (Culture & Tech)
-    | "decathlon";     // Decathlon via Awin (Sports)
+    | "fnaces"         // Fnac ES
+    | "decathlon"      // Decathlon via Awin (Sports)
+    | "decathlones";   // Decathlon ES
 
 // ============================================
 // GIFT QUIZ TYPES

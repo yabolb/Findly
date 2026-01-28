@@ -207,6 +207,19 @@ export default function AdminStatusPage() {
         fetchLogs();
     }, [logsPage, platformFilter]);
 
+    // AUTO-POLLING: If any log is 'running', poll every 3 seconds
+    useEffect(() => {
+        const hasRunningSync = syncLogs.some(log => log.status === 'running');
+
+        if (hasRunningSync || isSyncing) {
+            const interval = setInterval(() => {
+                fetchLogs();
+                fetchStats();
+            }, 3000);
+            return () => clearInterval(interval);
+        }
+    }, [syncLogs, isSyncing]);
+
     const handleRefresh = () => {
         fetchStats();
         fetchProducts();
@@ -231,6 +244,28 @@ export default function AdminStatusPage() {
                         <div className="flex items-center gap-4">
                             {/* Refresh Button */}
 
+
+                            <button
+                                onClick={async () => {
+                                    if (confirm("¿Estás seguro de que quieres limpiar los logs bloqueados? Esto marcará como 'error' los procesos que se quedaron colgados.")) {
+                                        try {
+                                            const { error } = await supabase.from('sync_logs').update({ status: 'error', error_message: 'Limpieza manual' }).eq('status', 'running');
+                                            if (!error) {
+                                                alert("Logs limpiados.");
+                                                handleRefresh();
+                                            }
+                                        } catch (e) {
+                                            console.error(e);
+                                        }
+                                    }
+                                }}
+                                className="
+                                    px-4 py-2 bg-slate-200 text-slate-700 text-sm font-medium
+                                    rounded-xl hover:bg-slate-300 transition-colors
+                                "
+                            >
+                                Limpiar Logs
+                            </button>
 
                             <button
                                 onClick={async () => {
@@ -374,8 +409,8 @@ export default function AdminStatusPage() {
                                     <th className="px-4 py-3 text-left font-medium text-slate-500">Fecha</th>
                                     <th className="px-4 py-3 text-left font-medium text-slate-500">Plataforma</th>
                                     <th className="px-4 py-3 text-left font-medium text-slate-500">Estado</th>
-                                    <th className="px-4 py-3 text-right font-medium text-slate-500">Items</th>
-                                    <th className="px-4 py-3 text-left font-medium text-slate-500">Detalles</th>
+                                    <th className="px-4 py-3 text-right font-medium text-slate-500">Operaciones OK</th>
+                                    <th className="px-4 py-3 text-left font-medium text-slate-500">Progreso</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
@@ -397,12 +432,28 @@ export default function AdminStatusPage() {
                                                 {log.status}
                                             </span>
                                         </td>
-                                        <td className="px-4 py-3 text-right text-slate-600">
-                                            {log.items_added !== undefined ? log.items_added : '-'}
+                                        <td className="px-4 py-3 text-right text-slate-600 font-mono">
+                                            {log.items_added !== undefined ? log.items_added.toLocaleString() : '-'}
                                         </td>
-                                        <td className="px-4 py-3 text-xs text-slate-500 max-w-xs truncate" title={log.error_message || ''}>
-                                            {log.error_message ||
-                                                (log.items_found !== null ? `Found: ${log.items_found}` : 'OK')}
+                                        <td className="px-4 py-3 text-xs text-slate-500 max-w-xs" title={log.error_message || ''}>
+                                            {log.status === 'running' ? (
+                                                <div className="flex flex-col gap-1 w-full max-w-[150px]">
+                                                    <div className="flex justify-between text-[10px] text-slate-400">
+                                                        <span>Total Feed: {log.items_found?.toLocaleString() || 0}</span>
+                                                        <span>OK: {log.items_added?.toLocaleString() || 0}</span>
+                                                    </div>
+                                                    <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden border border-slate-200/50">
+                                                        <motion.div
+                                                            initial={{ width: 0 }}
+                                                            animate={{ width: "100%" }}
+                                                            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                                                            className="bg-indigo-500 h-full"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                log.error_message || (log.items_found !== null ? `Total Feed: ${log.items_found}` : 'OK')
+                                            )}
                                         </td>
                                     </tr>
                                 ))}
