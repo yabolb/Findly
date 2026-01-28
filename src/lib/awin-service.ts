@@ -37,6 +37,7 @@ interface ProductFeed {
 }
 
 const AWIN_API_TOKEN = process.env.AWIN_API_TOKEN;
+const AWIN_FEED_KEY = process.env.AWIN_FEED_KEY;
 const AWIN_PUBLISHER_ID = process.env.AWIN_PUBLISHER_ID;
 const BASE_URL = 'https://api.awin.com';
 
@@ -81,7 +82,47 @@ export class AwinService {
     /**
      * Construct the Product Feed URL for a specific advertiser
      */
-    getFeedUrl(advertiserId: number): string {
+    /**
+     * Get the Feed ID (FID) for a specific advertiser by fetching the feed list
+     */
+    async getFeedId(advertiserId: number): Promise<number | null> {
+        const apiKey = AWIN_FEED_KEY || AWIN_API_TOKEN;
+        const listUrl = `https://productdata.awin.com/datafeed/list/apikey/${apiKey}`;
+
+        try {
+            console.log(`Fetching feed list to find FID for advertiser ${advertiserId}...`);
+            const response = await fetch(listUrl);
+            if (!response.ok) throw new Error(`Failed to fetch feed list: ${response.statusText}`);
+
+            const text = await response.text();
+
+            // Basic CSV parsing to find the line with the advertiser ID
+            // Format: Advertiser ID, Name, Region, Status, Feed ID, ...
+            const lines = text.split('\n');
+            for (const line of lines) {
+                // Handle quoted CSV fields roughly
+                const parts = line.split('","').map(p => p.replace(/^"|"$/g, ''));
+                if (parts[0] === advertiserId.toString()) {
+                    // Prefer "Universal" or "General" feeds if multiple exist, 
+                    // or just take the first one that is "Active"
+                    if (parts[3].toLowerCase() === 'active') {
+                        console.log(`Found Feed ID ${parts[4]} for advertiser ${advertiserId} (${parts[5]})`);
+                        return parseInt(parts[4]);
+                    }
+                }
+            }
+            console.warn(`No active feed found for advertiser ${advertiserId}`);
+            return null;
+        } catch (error) {
+            console.error('Error fetching feed list:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Construct the Product Feed URL using the specific Feed ID (FID)
+     */
+    getFeedUrl(feedId: number): string {
         // Basic CSV feed with essential columns
         const columns = [
             'product_name',
@@ -89,33 +130,65 @@ export class AwinService {
             'search_price',
             'currency',
             'merchant_image_url',
-            'awin_product_id',
+            'aw_product_id',
             'merchant_product_id',
             'merchant_category',
-            'awin_deep_link', // The tracking link
+            'aw_deep_link', // The tracking link
             'merchant_deep_link'
         ].join(',');
 
         // Using ZIP format to save bandwidth
-        return `https://productdata.awin.com/datafeed/download/apikey/${AWIN_API_TOKEN}/language/any/fid/${advertiserId}/columns/${columns}/format/csv/compression/zip`;
+        // Use the specific Product Feed API Key
+        const apiKey = AWIN_FEED_KEY || AWIN_API_TOKEN;
+        return `https://productdata.awin.com/datafeed/download/apikey/${apiKey}/language/any/fid/${feedId}/columns/${columns}/format/csv/compression/zip`;
     }
 
-    /**
-     * Map Awin raw category to Findly category
-     */
     mapCategory(rawCategory: string, productName: string): string | null {
+        // 1. Try Direct Mapping from Merchant Category
+        // This is much more reliable than guessing from the product name.
+        if (rawCategory) {
+            const catLower = rawCategory.toLowerCase();
+
+            // Music / Books / Movies
+            if (catLower.match(/música|music|cd|vinyl|disco|grabaciones|libros|books|dvd|movies|pelicula|cine/)) return 'movies-books-music';
+
+            // Tech
+            if (catLower.match(/electronics|computers|phones|tecnologia|informatica|electronica|audio|video|consolas|gaming|videojuegos/)) return 'tech-electronics';
+
+            // Fashion
+            if (catLower.match(/apparel|clothing|shoes|accessories|ropa|moda|calzado|accesorios|joyeria|jewelry|relojes|watches/)) return 'fashion';
+
+            // Home
+            if (catLower.match(/home|garden|furniture|kitchen|hogar|jardin|muebles|cocina|decoracion|bricolaje|diy/)) return 'home-garden';
+
+            // Baby / Kids
+            if (catLower.match(/toys|baby|games|juguetes|bebe|ninos|infantil/)) return 'baby-kids'; // 'ninos' matches 'Niños' often normalized
+
+            // Sports
+            if (catLower.match(/sports|fitness|deportes|gimnasio|aire libre|camping/)) return 'sports-leisure';
+
+            // Art / Collectibles
+            if (catLower.match(/arts|hobbies|crafts|arte|ocio|coleccionismo|papeleria/)) return 'collectibles-art';
+
+            // DIY / Tools
+            if (catLower.match(/tools|hardware|herramientas/)) return 'diy';
+        }
+
+        // 2. Fallback to Keyword Matching in Product Name (if merchant category is missing or generic)
         const text = (rawCategory + ' ' + productName).toLowerCase();
 
-        if (text.match(/iphone|laptop|macbook|samsung|pixel|camera|audio|headphone|speaker|console|gaming|nintendo|playstation|xbox|tablet/)) return 'tech-electronics';
-        if (text.match(/shirt|dress|jeans|jacket|coat|sneakers|shoes|boots|bag|purse|wallet|clothing|fashion|watch|jewelry/)) return 'fashion';
-        if (text.match(/sofa|chair|table|desk|lamp|bed|mattress|furniture|garden|kitchen|cookware|home/)) return 'home-garden';
-        if (text.match(/bike|bicycle|gym|fitness|yoga|tennis|football|soccer|basketball|sports|camping|tent/)) return 'sports-leisure';
-        if (text.match(/toy|lego|doll|game|board game|puzzle|kid|baby|stroller|crib/)) return 'baby-kids';
-        if (text.match(/book|cd|dvd|vinyl|movie|music|album/)) return 'movies-books-music';
-        if (text.match(/drill|saw|hammer|tool|diy|hardware/)) return 'diy';
-        if (text.match(/art|painting|sculpture|collectible|funko|antique/)) return 'collectibles-art';
+        if (text.match(/\b(iphone|laptop|macbook|samsung|pixel|camera|audio|headphone|speaker|console|gaming|nintendo|playstation|xbox|tablet|movil|celular|ordenador|portatil|teclado|raton|pantalla|monitor)\b/)) return 'tech-electronics';
+        if (text.match(/\b(shirt|dress|jeans|jacket|coat|sneakers|shoes|boots|bag|purse|wallet|clothing|fashion|watch|jewelry|ropa|camiseta|pantalon|vestido|abrigo|chaqueta|zapatos|zapatillas|botas|bolso|cartera|moda|reloj|joya|pulsera|collar|pendiente|calcetin)\b/)) return 'fashion';
+        if (text.match(/\b(sofa|chair|table|desk|lamp|bed|mattress|furniture|garden|kitchen|cookware|home|hogar|mueble|silla|mesa|escritorio|lampara|cama|colchon|jardin|cocina|sarten|olla|decoracion)\b/)) return 'home-garden';
+        if (text.match(/\b(bike|bicycle|gym|fitness|yoga|tennis|football|soccer|basketball|sports|camping|tent|deporte|bici|bicicleta|gimnasio|futbol|baloncesto|tenis|camping|tienda de campa)\b/)) return 'sports-leisure';
+        if (text.match(/\b(toy|lego|doll|game|board game|puzzle|kid|baby|stroller|crib|juguete|muneca|bebe|nino|nina|cuna|carrito|juego de mesa)\b/)) return 'baby-kids';
+        if (text.match(/\b(book|cd|dvd|vinyl|movie|music|album|libro|musica|pelicula|disco|vinilo|lectura)\b/)) return 'movies-books-music';
+        if (text.match(/\b(drill|saw|hammer|tool|diy|hardware|herramienta|taladro|sierra|martillo|bricolaje)\b/)) return 'diy';
+        if (text.match(/\b(art|painting|sculpture|collectible|funko|antique|arte|pintura|escultura|coleccion|antigueedad)\b/)) return 'collectibles-art';
 
-        return null; // Discard if no match
+        // Log skipped categories for debugging
+        // console.log(`Skipped category: ${rawCategory} (${productName})`);
+        return 'others'; // Fallback to 'others' instead of skipping to capture more items
     }
 
     /**
@@ -177,7 +250,7 @@ export class AwinService {
                                         price: price,
                                         currency: record.currency || 'EUR',
                                         image_url: record.merchant_image_url,
-                                        source_url: record.awin_deep_link, // TRACKING LINK
+                                        source_url: record.aw_deep_link, // TRACKING LINK
                                         platform: platformKey, // e.g. 'fnaces'
                                         source_network: 'awin',
                                         category: category,
@@ -229,7 +302,15 @@ export class AwinService {
 
             // 2. Iterate and Sync
             for (const partner of partners) {
-                const feedUrl = this.getFeedUrl(partner.id);
+                // Dynamic discovery of Feed ID
+                const feedId = await this.getFeedId(partner.id);
+
+                if (!feedId) {
+                    console.warn(`Skipping ${partner.name} (No active feed found)`);
+                    continue;
+                }
+
+                const feedUrl = this.getFeedUrl(feedId);
 
                 try {
                     // Log start
