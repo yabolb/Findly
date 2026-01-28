@@ -8,6 +8,7 @@ import ProductGrid from "@/components/ProductGrid";
 import QuizUpsell from "@/components/QuizUpsell";
 import { motion } from "framer-motion";
 import { Sparkles } from "lucide-react";
+import { sendEvent } from "@/lib/analytics";
 
 // SEO Labels for metadata (kept for fallback logic)
 const RECIPIENT_LABELS: Record<string, string> = {
@@ -158,6 +159,26 @@ function ResultsContent() {
 
         fetchResults();
     }, [searchParams]);
+
+    // Track view_results event
+    useEffect(() => {
+        if (!isLoading && products.length > 0) {
+            const params: Record<string, any> = {
+                category_filtered: searchType.type === 'category' ? searchType.value : 'all'
+            };
+
+            if (searchType.type === 'quiz') {
+                params.quiz_interests = quizParams.interests;
+                params.category_filtered = 'quiz_custom';
+            } else if (searchType.type === 'recipient') {
+                params.recipient = searchType.value;
+            } else if (searchType.type === 'occasion') {
+                params.occasion = searchType.value;
+            }
+
+            sendEvent('view_results', params);
+        }
+    }, [isLoading, products.length, searchType]);
 
     const generateFallbackReason = (
         isQuiz: boolean,

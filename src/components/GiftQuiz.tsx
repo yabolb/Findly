@@ -18,6 +18,7 @@ import {
     BUDGET_LABELS,
 } from "@/types";
 import { CATEGORY_ICONS } from "@/lib/mock-data";
+import { sendEvent } from "@/lib/analytics";
 
 interface GiftQuizProps {
     onComplete: (answers: QuizAnswers) => void;
@@ -76,6 +77,9 @@ export default function GiftQuiz({ onComplete }: GiftQuizProps) {
     };
 
     const handleNext = () => {
+        const stepNames = ['recipient', 'occasion', 'interests', 'budget'];
+        sendEvent('quiz_progress', { step_name: stepNames[currentStep], action: 'next' });
+
         if (currentStep < totalSteps - 1) {
             setCurrentStep(currentStep + 1);
         } else {
@@ -92,6 +96,7 @@ export default function GiftQuiz({ onComplete }: GiftQuizProps) {
     };
 
     const toggleInterest = (category: Category) => {
+        sendEvent('quiz_progress', { step_name: 'interests', value: category });
         setAnswers((prev) => ({
             ...prev,
             interests: prev.interests.includes(category)
@@ -181,7 +186,10 @@ export default function GiftQuiz({ onComplete }: GiftQuizProps) {
                                             {(Object.keys(AGE_RANGE_LABELS) as AgeRange[]).map((age) => (
                                                 <button
                                                     key={age}
-                                                    onClick={() => setAnswers({ ...answers, ageRange: age })}
+                                                    onClick={() => {
+                                                        setAnswers({ ...answers, ageRange: age });
+                                                        sendEvent('quiz_progress', { step_name: 'recipient', detail: 'age' });
+                                                    }}
                                                     className={`p-3 sm:p-4 rounded-xl sm:rounded-2xl border-2 transition-all duration-200 ${answers.ageRange === age
                                                         ? "border-primary bg-primary/10 shadow-md"
                                                         : "border-gray-200 hover:border-primary/50 bg-white active:bg-gray-50"
@@ -204,7 +212,10 @@ export default function GiftQuiz({ onComplete }: GiftQuizProps) {
                                             {(Object.keys(RELATIONSHIP_LABELS) as Relationship[]).map((rel) => (
                                                 <button
                                                     key={rel}
-                                                    onClick={() => setAnswers({ ...answers, relationship: rel })}
+                                                    onClick={() => {
+                                                        setAnswers({ ...answers, relationship: rel });
+                                                        sendEvent('quiz_progress', { step_name: 'recipient', detail: 'relationship' });
+                                                    }}
                                                     className={`p-3 sm:p-4 rounded-xl sm:rounded-2xl border-2 transition-all duration-200 ${answers.relationship === rel
                                                         ? "border-primary bg-primary/10 shadow-md"
                                                         : "border-gray-200 hover:border-primary/50 bg-white active:bg-gray-50"
@@ -226,7 +237,10 @@ export default function GiftQuiz({ onComplete }: GiftQuizProps) {
                                     {(Object.keys(OCCASION_LABELS) as Occasion[]).map((occ) => (
                                         <button
                                             key={occ}
-                                            onClick={() => setAnswers({ ...answers, occasion: occ })}
+                                            onClick={() => {
+                                                setAnswers({ ...answers, occasion: occ });
+                                                sendEvent('quiz_progress', { step_name: 'occasion', value: occ });
+                                            }}
                                             className={`p-4 sm:p-6 rounded-2xl sm:rounded-3xl border-2 transition-all duration-200 ${answers.occasion === occ
                                                 ? "border-primary bg-primary/10 shadow-md scale-[1.02]"
                                                 : "border-gray-200 hover:border-primary/50 bg-white active:bg-gray-50"
@@ -284,7 +298,10 @@ export default function GiftQuiz({ onComplete }: GiftQuizProps) {
                                     {(Object.keys(BUDGET_LABELS) as BudgetRange[]).map((budget) => (
                                         <button
                                             key={budget}
-                                            onClick={() => setAnswers({ ...answers, budget })}
+                                            onClick={() => {
+                                                setAnswers({ ...answers, budget });
+                                                sendEvent('quiz_progress', { step_name: 'budget', value: budget });
+                                            }}
                                             className={`p-6 sm:p-8 rounded-2xl sm:rounded-3xl border-2 transition-all duration-200 ${answers.budget === budget
                                                 ? "border-primary bg-primary/10 shadow-md scale-[1.02]"
                                                 : "border-gray-200 hover:border-primary/50 bg-white active:bg-gray-50"

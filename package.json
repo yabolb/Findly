@@ -21,6 +21,7 @@
   },
   "homepage": "https://github.com/yabolb/Fin#readme",
   "dependencies": {
+    "@next/third-parties": "^16.1.6",
     "@supabase/supabase-js": "^2.90.1",
     "@types/pg": "^8.16.0",
     "clsx": "^2.1.1",

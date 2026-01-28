@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Sparkles, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { sendEvent } from '@/lib/analytics';
 
 export default function InlineQuizMagnet() {
     return (
@@ -34,7 +35,11 @@ export default function InlineQuizMagnet() {
                         </p>
                     </div>
 
-                    <Link href="/quiz" className="flex-shrink-0">
+                    <Link
+                        href="/quiz"
+                        className="flex-shrink-0"
+                        onClick={() => sendEvent('quiz_start')}
+                    >
                         <button className="group flex items-center gap-3 bg-white text-primary font-bold text-lg px-8 py-4 rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300">
                             <span>Empezar el Quiz</span>
                             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />

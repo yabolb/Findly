@@ -3,6 +3,7 @@
 import { Product } from "@/types";
 import { PLATFORM_LOGOS, PLATFORM_NAMES } from "@/lib/mock-data";
 import { ExternalLink, Sparkles, ShoppingBag } from "lucide-react";
+import { sendEvent } from "@/lib/analytics";
 import { useState } from "react";
 import { motion } from "framer-motion";
 
@@ -14,12 +15,23 @@ export default function ProductCard({ product }: ProductCardProps) {
     const [imageLoaded, setImageLoaded] = useState(false);
     const [imageError, setImageError] = useState(false);
 
+    const trackAffiliate = () => {
+        sendEvent('affiliate_click', {
+            product_name: product.title,
+            product_price: product.price,
+            merchant: PLATFORM_NAMES[product.platform] || product.platform,
+            product_category: product.category,
+        });
+    };
+
     const handleClick = () => {
+        trackAffiliate();
         window.open(product.source_url, "_blank", "noopener,noreferrer");
     };
 
     const handleBuyClick = (e: React.MouseEvent) => {
         e.stopPropagation(); // Prevent card click
+        trackAffiliate();
         window.open(product.source_url, "_blank", "noopener,noreferrer");
     };
 

@@ -4,8 +4,8 @@ import { Plus_Jakarta_Sans, Inter } from 'next/font/google';
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import ConsentManager from "@/components/layout/ConsentManager";
-import GoogleAnalytics from "@/components/GoogleAnalytics";
 import Footer from "@/components/layout/Footer";
+import { GoogleAnalytics } from "@next/third-parties/google";
 
 // Optimized font loading with next/font
 const plusJakartaSans = Plus_Jakarta_Sans({
@@ -70,7 +70,7 @@ export default function RootLayout({
                 <ConsentManager />
 
                 {/* Google Analytics */}
-                <GoogleAnalytics />
+                <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || process.env.NEXT_PUBLIC_GA_ID || ''} />
 
                 <Navbar />
 
