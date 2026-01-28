@@ -1,32 +1,43 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import GiftQuiz from "@/components/GiftQuiz";
+import CalculationSequence from "@/components/CalculationSequence";
 import { QuizAnswers } from "@/types";
 
 export default function QuizClient() {
     const router = useRouter();
+    const [isCalculating, setIsCalculating] = useState(false);
+    const [savedAnswers, setSavedAnswers] = useState<QuizAnswers | null>(null);
 
     const handleQuizComplete = (quizAnswers: QuizAnswers) => {
+        setSavedAnswers(quizAnswers);
+        setIsCalculating(true);
+    };
+
+    const navigateToResults = () => {
+        if (!savedAnswers) return;
+
         // Build query string from quiz answers
         const params = new URLSearchParams();
         params.set("source", "quiz");
 
-        if (quizAnswers.relationship) {
-            params.set("relationship", quizAnswers.relationship);
+        if (savedAnswers.relationship) {
+            params.set("relationship", savedAnswers.relationship);
         }
-        if (quizAnswers.ageRange) {
-            params.set("ageRange", quizAnswers.ageRange);
+        if (savedAnswers.ageRange) {
+            params.set("ageRange", savedAnswers.ageRange);
         }
-        if (quizAnswers.occasion) {
-            params.set("occasion", quizAnswers.occasion);
+        if (savedAnswers.occasion) {
+            params.set("occasion", savedAnswers.occasion);
         }
-        if (quizAnswers.budget) {
-            params.set("budget", quizAnswers.budget);
+        if (savedAnswers.budget) {
+            params.set("budget", savedAnswers.budget);
         }
         // Add interests as array parameters
-        quizAnswers.interests.forEach((interest) => {
+        savedAnswers.interests.forEach((interest) => {
             params.append("interests[]", interest);
         });
 
@@ -35,15 +46,19 @@ export default function QuizClient() {
     };
 
     return (
-        <main className="min-h-screen pt-28 pb-16 px-6 lg:px-8">
+        <main className="min-h-screen pt-28 pb-16 px-6 lg:px-8 bg-slate-50/50">
             <div className="max-w-4xl mx-auto">
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5 }}
-                >
-                    <GiftQuiz onComplete={handleQuizComplete} />
-                </motion.div>
+                {isCalculating && savedAnswers ? (
+                    <CalculationSequence answers={savedAnswers} onComplete={navigateToResults} />
+                ) : (
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5 }}
+                    >
+                        <GiftQuiz onComplete={handleQuizComplete} />
+                    </motion.div>
+                )}
             </div>
         </main>
     );

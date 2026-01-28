@@ -63,7 +63,11 @@ export default function ProductGrid({
             }
 
             items.push(
-                <ProductCard key={product.id} product={product} />
+                <ProductCard
+                    key={product.id}
+                    product={product}
+                    isTopMatch={index === 0}
+                />
             );
         });
 

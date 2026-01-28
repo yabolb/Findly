@@ -44,19 +44,19 @@ export default function GiftQuiz({ onComplete }: GiftQuizProps) {
 
     const steps = [
         {
-            title: "¿Para quién es el regalo?",
+            title: "¡Vamos allá! ¿A quién vamos a sorprender hoy?",
             subtitle: "Cuéntanos sobre la persona especial",
         },
         {
-            title: "¿Cuál es la ocasión?",
+            title: "¿Qué estamos celebrando?",
             subtitle: "Ayúdanos a encontrar el regalo perfecto",
         },
         {
-            title: "¿Qué le interesa?",
+            title: "¿Qué le apasiona? (Elige varios)",
             subtitle: "Selecciona todos los que apliquen",
         },
         {
-            title: "¿Cuál es tu presupuesto?",
+            title: "¿Cuánto quieres invertir en el detalle?",
             subtitle: "Encontraremos opciones que encajen",
         },
     ];
@@ -84,6 +84,29 @@ export default function GiftQuiz({ onComplete }: GiftQuizProps) {
             setCurrentStep(currentStep + 1);
         } else {
             onComplete(answers);
+        }
+    };
+
+    const autoAdvance = (updatedAnswers: QuizAnswers) => {
+        // Build a temporary local version of canProceed check
+        let isReady = false;
+        switch (currentStep) {
+            case 0:
+                isReady = updatedAnswers.ageRange !== null && updatedAnswers.relationship !== null;
+                break;
+            case 1:
+                isReady = updatedAnswers.occasion !== null;
+                break;
+            case 3:
+                isReady = updatedAnswers.budget !== null;
+                break;
+        }
+
+        if (isReady) {
+            // Delay slightly for visual feedback of the selection
+            setTimeout(() => {
+                handleNext();
+            }, 300);
         }
     };
 
@@ -187,8 +210,10 @@ export default function GiftQuiz({ onComplete }: GiftQuizProps) {
                                                 <button
                                                     key={age}
                                                     onClick={() => {
-                                                        setAnswers({ ...answers, ageRange: age });
+                                                        const updated = { ...answers, ageRange: age };
+                                                        setAnswers(updated);
                                                         sendEvent('quiz_progress', { step_name: 'recipient', detail: 'age' });
+                                                        autoAdvance(updated);
                                                     }}
                                                     className={`p-3 sm:p-4 rounded-xl sm:rounded-2xl border-2 transition-all duration-200 ${answers.ageRange === age
                                                         ? "border-primary bg-primary/10 shadow-md"
@@ -213,8 +238,10 @@ export default function GiftQuiz({ onComplete }: GiftQuizProps) {
                                                 <button
                                                     key={rel}
                                                     onClick={() => {
-                                                        setAnswers({ ...answers, relationship: rel });
+                                                        const updated = { ...answers, relationship: rel };
+                                                        setAnswers(updated);
                                                         sendEvent('quiz_progress', { step_name: 'recipient', detail: 'relationship' });
+                                                        autoAdvance(updated);
                                                     }}
                                                     className={`p-3 sm:p-4 rounded-xl sm:rounded-2xl border-2 transition-all duration-200 ${answers.relationship === rel
                                                         ? "border-primary bg-primary/10 shadow-md"
@@ -238,8 +265,10 @@ export default function GiftQuiz({ onComplete }: GiftQuizProps) {
                                         <button
                                             key={occ}
                                             onClick={() => {
-                                                setAnswers({ ...answers, occasion: occ });
+                                                const updated = { ...answers, occasion: occ };
+                                                setAnswers(updated);
                                                 sendEvent('quiz_progress', { step_name: 'occasion', value: occ });
+                                                autoAdvance(updated);
                                             }}
                                             className={`p-4 sm:p-6 rounded-2xl sm:rounded-3xl border-2 transition-all duration-200 ${answers.occasion === occ
                                                 ? "border-primary bg-primary/10 shadow-md scale-[1.02]"
@@ -299,8 +328,10 @@ export default function GiftQuiz({ onComplete }: GiftQuizProps) {
                                         <button
                                             key={budget}
                                             onClick={() => {
-                                                setAnswers({ ...answers, budget });
+                                                const updated = { ...answers, budget };
+                                                setAnswers(updated);
                                                 sendEvent('quiz_progress', { step_name: 'budget', value: budget });
+                                                autoAdvance(updated);
                                             }}
                                             className={`p-6 sm:p-8 rounded-2xl sm:rounded-3xl border-2 transition-all duration-200 ${answers.budget === budget
                                                 ? "border-primary bg-primary/10 shadow-md scale-[1.02]"
@@ -330,19 +361,21 @@ export default function GiftQuiz({ onComplete }: GiftQuizProps) {
                     <span className="text-sm sm:text-base">{currentStep === 0 ? "Inicio" : "Anterior"}</span>
                 </button>
 
-                <button
-                    onClick={() => paginate(1)}
-                    disabled={!canProceed()}
-                    className={`flex items-center gap-1 sm:gap-2 px-5 sm:px-8 py-2.5 sm:py-3 rounded-full font-semibold text-sm sm:text-base transition-all duration-200 ${canProceed()
-                        ? "bg-primary text-white hover:bg-primary/90 shadow-lg hover:shadow-xl active:scale-95"
-                        : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                        }`}
-                >
-                    <span>
-                        {currentStep === totalSteps - 1 ? "Ver Regalos" : "Siguiente"}
-                    </span>
-                    <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
-                </button>
+                {(currentStep === 2) && (
+                    <button
+                        onClick={() => paginate(1)}
+                        disabled={!canProceed()}
+                        className={`flex items-center gap-1 sm:gap-2 px-5 sm:px-8 py-2.5 sm:py-3 rounded-full font-semibold text-sm sm:text-base transition-all duration-200 ${canProceed()
+                            ? "bg-primary text-white hover:bg-primary/90 shadow-lg hover:shadow-xl active:scale-95"
+                            : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                            }`}
+                    >
+                        <span>
+                            {answers.interests.length > 0 ? "¡Todo listo!" : "Siguiente"}
+                        </span>
+                        <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
+                    </button>
+                )}
             </div>
         </div>
     );
