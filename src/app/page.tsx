@@ -11,6 +11,8 @@ export const metadata: Metadata = {
     },
 };
 
+import StartQuizButton from "@/components/StartQuizButton";
+
 export default function Home() {
     return (
         <main className="min-h-screen">
@@ -36,17 +38,7 @@ export default function Home() {
                     </p>
 
                     {/* CTA Button - Now static with CSS animations */}
-                    <div className="animate-fade-in-up">
-                        <Link href="/quiz">
-                            <button className="group relative inline-flex items-center gap-3 bg-primary hover:bg-primary/90 text-white font-semibold text-lg px-10 py-5 rounded-full shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
-                                {/* Pulsing ring effect */}
-                                <span className="absolute inset-0 rounded-full bg-primary animate-ping opacity-20" />
-
-                                <Gift className="w-6 h-6" />
-                                <span>Empezar Cuestionario</span>
-                            </button>
-                        </Link>
-                    </div>
+                    <StartQuizButton />
 
                     {/* Trust indicators - Static */}
                     <div className="mt-12 flex flex-wrap justify-center gap-8 text-sm text-text-main/50 animate-fade-in">

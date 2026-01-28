@@ -323,6 +323,11 @@ function ResultsContent() {
                             >
                                 <a
                                     href="/quiz"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        sendEvent('quiz_start', { source: 'results_restart' });
+                                        window.location.href = '/quiz';
+                                    }}
                                     className="inline-flex items-center gap-2 text-text-main/60 hover:text-primary transition-colors px-6 py-3 rounded-full border border-gray-200 hover:border-primary/50 hover:bg-primary/5"
                                 >
                                     <span>Buscar otro regalo</span>
@@ -345,6 +350,11 @@ function ResultsContent() {
                         </p>
                         <a
                             href="/quiz"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                sendEvent('quiz_start', { source: 'results_not_found' });
+                                window.location.href = '/quiz';
+                            }}
                             className="inline-block bg-primary text-white font-semibold px-6 py-3 rounded-2xl hover:bg-primary/90 transition-colors"
                         >
                             Empezar Cuestionario

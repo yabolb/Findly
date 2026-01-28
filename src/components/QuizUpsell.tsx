@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { Sparkles, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { sendEvent } from "@/lib/analytics";
 
 interface QuizUpsellProps {
     knownParams: {
@@ -42,7 +43,7 @@ export default function QuizUpsell({ knownParams }: QuizUpsellProps) {
                     </div>
 
                     {/* CTA Button */}
-                    <Link href={quizUrl}>
+                    <Link href={quizUrl} onClick={() => sendEvent('quiz_start', { source: 'upsell' })}>
                         <motion.button
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Gift } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useScrollPosition } from "@/hooks/useScrollPosition";
+import { sendEvent } from "@/lib/analytics";
 
 export default function Navbar() {
     const { scrollY } = useScrollPosition();
@@ -65,7 +66,7 @@ export default function Navbar() {
                     </div>
 
                     {/* CTA Button - Always visible */}
-                    <Link href="/quiz">
+                    <Link href="/quiz" onClick={() => sendEvent('quiz_start', { source: 'navbar' })}>
                         <button className="bg-primary hover:bg-primary/90 text-white font-medium px-4 sm:px-5 py-2 sm:py-2.5 text-sm sm:text-base rounded-full transition-all duration-200 hover:shadow-lg whitespace-nowrap">
                             Encontrar regalo
                         </button>

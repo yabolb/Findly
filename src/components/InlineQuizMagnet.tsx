@@ -38,7 +38,7 @@ export default function InlineQuizMagnet() {
                     <Link
                         href="/quiz"
                         className="flex-shrink-0"
-                        onClick={() => sendEvent('quiz_start')}
+                        onClick={() => sendEvent('quiz_start', { source: 'inline_magnet' })}
                     >
                         <button className="group flex items-center gap-3 bg-white text-primary font-bold text-lg px-8 py-4 rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300">
                             <span>Empezar el Quiz</span>
