@@ -100,22 +100,40 @@ export class AwinService {
             const text = await response.text();
 
             // Basic CSV parsing to find the line with the advertiser ID
-            // Format: Advertiser ID, Name, Region, Status, Feed ID, ...
             const lines = text.split('\n');
+            let potentialFeeds: { id: number, name: string, count: number }[] = [];
+
             for (const line of lines) {
-                // Handle quoted CSV fields roughly
                 const parts = line.split('","').map(p => p.replace(/^"|"$/g, ''));
-                if (parts[0] === advertiserId.toString()) {
-                    // Prefer "Universal" or "General" feeds if multiple exist, 
-                    // or just take the first one that is "Active"
-                    if (parts[3].toLowerCase() === 'active') {
-                        console.log(`Found Feed ID ${parts[4]} for advertiser ${advertiserId} (${parts[5]})`);
-                        return parseInt(parts[4]);
-                    }
+                if (parts[0] === advertiserId.toString() && parts[3].toLowerCase() === 'active') {
+                    potentialFeeds.push({
+                        id: parseInt(parts[4]),
+                        name: parts[5],
+                        count: parseInt(parts[10]) || 0
+                    });
                 }
             }
-            console.warn(`No active feed found for advertiser ${advertiserId}`);
-            return null;
+
+            if (potentialFeeds.length === 0) {
+                console.warn(`No active feed found for advertiser ${advertiserId}`);
+                return null;
+            }
+
+            // Preference logic:
+            // 1. Look for 'GENERAL' or 'UNIVERSAL' or 'SIN LIBROS'
+            const generalFeed = potentialFeeds.find(f =>
+                f.name.match(/GENERAL|UNIVERSAL|SIN LIBROS|MODA Y OCIO|Padrão|Default/i)
+            );
+
+            if (generalFeed) {
+                console.log(`Selected General Feed: ${generalFeed.name} (${generalFeed.id}) with ${generalFeed.count} items`);
+                return generalFeed.id;
+            }
+
+            // 2. Fallback to the largest feed
+            const largestFeed = potentialFeeds.sort((a, b) => b.count - a.count)[0];
+            console.log(`Selected Largest Feed: ${largestFeed.name} (${largestFeed.id}) with ${largestFeed.count} items`);
+            return largestFeed.id;
         } catch (error) {
             console.error('Error fetching feed list:', error);
             return null;
@@ -166,50 +184,57 @@ export class AwinService {
 
     mapCategory(rawCategory: string, productName: string): string | null {
         // 1. Try Direct Mapping from Merchant Category
-        // This is much more reliable than guessing from the product name.
         if (rawCategory) {
             const catLower = rawCategory.toLowerCase();
 
-            // Music / Books / Movies
-            if (catLower.match(/música|music|cd|vinyl|disco|grabaciones|libros|books|dvd|movies|pelicula|cine/)) return 'movies-books-music';
+            // Split Movies, Books, Music (PRD v12.0 granularity)
+            if (catLower.match(/música|music|cd|vinyl|disco|grabaciones|album/)) return 'music';
+            if (catLower.match(/libros|books|literatura|novela|comic|manga/)) return 'books';
+            if (catLower.match(/dvd|movies|pelicula|cine|blu-ray|streaming/)) return 'movies';
 
             // Tech
-            if (catLower.match(/electronics|computers|phones|tecnologia|informatica|electronica|audio|video|consolas|gaming|videojuegos/)) return 'tech-electronics';
+            if (catLower.match(/electronics|computers|phones|tecnologia|informatica|electronica|audio|video|consolas|gaming|videojuegos|informatica/)) return 'tech-electronics';
 
             // Fashion
             if (catLower.match(/apparel|clothing|shoes|accessories|ropa|moda|calzado|accesorios|joyeria|jewelry|relojes|watches/)) return 'fashion';
 
             // Home
-            if (catLower.match(/home|garden|furniture|kitchen|hogar|jardin|muebles|cocina|decoracion|bricolaje|diy/)) return 'home-garden';
+            if (catLower.match(/home|garden|furniture|kitchen|hogar|jardin|muebles|cocina|decoracion|bricolaje/)) return 'home-garden';
 
             // Baby / Kids
-            if (catLower.match(/toys|baby|games|juguetes|bebe|ninos|infantil/)) return 'baby-kids'; // 'ninos' matches 'Niños' often normalized
+            if (catLower.match(/toys|baby|games|juguetes|bebe|ninos|infantil/)) return 'baby-kids';
 
             // Sports
-            if (catLower.match(/sports|fitness|deportes|gimnasio|aire libre|camping/)) return 'sports-leisure';
+            if (catLower.match(/sports|fitness|deportes|gimnasio|aire libre|camping/)) return 'sports-outdoors';
 
             // Art / Collectibles
             if (catLower.match(/arts|hobbies|crafts|arte|ocio|coleccionismo|papeleria/)) return 'collectibles-art';
 
-            // DIY / Tools
+            // DIY
             if (catLower.match(/tools|hardware|herramientas/)) return 'diy';
+
+            // New Categories from PRD
+            if (catLower.match(/belleza|beauty|perfume|cosmetica|maquillaje/)) return 'beauty-personal-care';
+            if (catLower.match(/motor|coche|moto|car|motorcycle|recambios/)) return 'motor-accessories';
+            if (catLower.match(/viajes|travel|hotel|vuelo|experiencias|escapadas/)) return 'travel-experiences';
         }
 
-        // 2. Fallback to Keyword Matching in Product Name (if merchant category is missing or generic)
+        // 2. Fallback to Keyword Matching in Product Name
         const text = (rawCategory + ' ' + productName).toLowerCase();
 
-        if (text.match(/\b(iphone|laptop|macbook|samsung|pixel|camera|audio|headphone|speaker|console|gaming|nintendo|playstation|xbox|tablet|movil|celular|ordenador|portatil|teclado|raton|pantalla|monitor)\b/)) return 'tech-electronics';
-        if (text.match(/\b(shirt|dress|jeans|jacket|coat|sneakers|shoes|boots|bag|purse|wallet|clothing|fashion|watch|jewelry|ropa|camiseta|pantalon|vestido|abrigo|chaqueta|zapatos|zapatillas|botas|bolso|cartera|moda|reloj|joya|pulsera|collar|pendiente|calcetin)\b/)) return 'fashion';
-        if (text.match(/\b(sofa|chair|table|desk|lamp|bed|mattress|furniture|garden|kitchen|cookware|home|hogar|mueble|silla|mesa|escritorio|lampara|cama|colchon|jardin|cocina|sarten|olla|decoracion)\b/)) return 'home-garden';
-        if (text.match(/\b(bike|bicycle|gym|fitness|yoga|tennis|football|soccer|basketball|sports|camping|tent|deporte|bici|bicicleta|gimnasio|futbol|baloncesto|tenis|camping|tienda de campa)\b/)) return 'sports-leisure';
-        if (text.match(/\b(toy|lego|doll|game|board game|puzzle|kid|baby|stroller|crib|juguete|muneca|bebe|nino|nina|cuna|carrito|juego de mesa)\b/)) return 'baby-kids';
-        if (text.match(/\b(book|cd|dvd|vinyl|movie|music|album|libro|musica|pelicula|disco|vinilo|lectura)\b/)) return 'movies-books-music';
-        if (text.match(/\b(drill|saw|hammer|tool|diy|hardware|herramienta|taladro|sierra|martillo|bricolaje)\b/)) return 'diy';
-        if (text.match(/\b(art|painting|sculpture|collectible|funko|antique|arte|pintura|escultura|coleccion|antigueedad)\b/)) return 'collectibles-art';
+        if (text.match(/\b(iphone|laptop|macbook|samsung|pixel|tablet|ordenador|portatil|gaming|switch|ps5|xbox|monitor)\b/)) return 'tech-electronics';
+        if (text.match(/\b(shirt|dress|jeans|jacket|sneakers|shoes|bag|watch|ropa|camiseta|vestido|zapatos|bolso|reloj|joya)\b/)) return 'fashion';
+        if (text.match(/\b(sofa|chair|table|lamp|bed|furniture|home|hogar|mueble|mesa|decoracion)\b/)) return 'home-garden';
+        if (text.match(/\b(bike|bicycle|gym|fitness|yoga|sports|deporte|bici|gimnasio|futbol|tenis)\b/)) return 'sports-outdoors';
+        if (text.match(/\b(toy|lego|doll|baby|juguete|bebe|nino|nina)\b/)) return 'baby-kids';
+        if (text.match(/\b(book|libro|novela|comic)\b/)) return 'books';
+        if (text.match(/\b(cd|vinyl|music|album|musica|disco)\b/)) return 'music';
+        if (text.match(/\b(dvd|movie|pelicula|cine)\b/)) return 'movies';
+        if (text.match(/\b(art|painting|collectible|arte|pintura|coleccion)\b/)) return 'collectibles-art';
+        if (text.match(/\b(makeup|maquillaje|perfume|crema|beauty|belleza)\b/)) return 'beauty-personal-care';
 
-        // Log skipped categories for debugging
-        // console.log(`Skipped category: ${rawCategory} (${productName})`);
-        return 'others'; // Fallback to 'others' instead of skipping to capture more items
+        // PRD v12.0: Skip if truly unknown to maintain quality
+        return null;
     }
 
     /**
@@ -237,6 +262,8 @@ export class AwinService {
 
             // 2. Process the local file
             await new Promise<void>((resolve, reject) => {
+                const seenUrls = new Set<string>(); // Prevent duplicate processing in same run
+
                 fs.createReadStream(tempZip)
                     .pipe(unzip.Parse())
                     .on('entry', async (entry) => {
@@ -254,6 +281,14 @@ export class AwinService {
                                     stats.processed++;
 
                                     try {
+                                        // Skip duplicates early to save DB calls
+                                        const sourceUrl = record.aw_deep_link;
+                                        if (seenUrls.has(sourceUrl)) {
+                                            stats.skipped++;
+                                            continue;
+                                        }
+                                        seenUrls.add(sourceUrl);
+
                                         const category = this.mapCategory(record.merchant_category || '', record.product_name || '');
 
                                         if (!category) {
@@ -275,23 +310,30 @@ export class AwinService {
                                             price: price,
                                             currency: record.currency || 'EUR',
                                             image_url: record.merchant_image_url,
-                                            source_url: record.aw_deep_link,
+                                            source_url: sourceUrl,
                                             platform: platformKey,
                                             source_network: 'awin',
                                             category: category,
                                             condition: 'new',
                                         };
 
-                                        await supabase
+                                        const { error: upsertError } = await supabase
                                             .from('products')
                                             .upsert({
                                                 ...productData,
                                                 updated_at: new Date().toISOString()
                                             }, { onConflict: 'source_url' });
 
+                                        if (upsertError) {
+                                            stats.errors++;
+                                            // Only log unique errors to avoid flooding
+                                            if (stats.errors < 5) console.error(`DB Error (${advertiserName}):`, upsertError.message);
+                                            continue;
+                                        }
+
                                         stats.added++;
 
-                                        // Periodic log update (every 100 items - more frequent for better UX)
+                                        // Periodic log update (every 100 items)
                                         if (logId && stats.processed % 100 === 0) {
                                             await supabase
                                                 .from('sync_logs')
