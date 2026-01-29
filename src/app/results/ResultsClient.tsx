@@ -67,7 +67,10 @@ function ResultsContent() {
             const isFromQuiz = source === "quiz";
             setIsQuizSource(isFromQuiz);
 
-            let query = supabase.from("products").select("*");
+            // Optimize Select: Fetch only necessary fields for the grid
+            let query = supabase
+                .from("products")
+                .select("id, title, price, currency, image_url, source_url, platform, category, findly_reason, recipients, occasions, created_at");
 
             if (isFromQuiz) {
                 // Quiz Results Flow
