@@ -136,7 +136,8 @@ function ResultsContent() {
             const { data, error } = await query;
 
             if (error) {
-                console.error("Error fetching results:", error);
+                console.error("Error fetching results:", JSON.stringify(error, null, 2));
+                console.error("Error details:", error.message, error.details || '', error.hint || '', error.code || '');
                 setProducts([]);
             } else {
                 // Add Findly Reason based on search type

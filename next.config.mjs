@@ -35,6 +35,10 @@ const nextConfig = {
                 protocol: 'https',
                 hostname: '**.amazon.es',
             },
+            {
+                protocol: 'https',
+                hostname: '**.elcorteingles.es',
+            },
         ],
     },
     async headers() {
