@@ -415,6 +415,11 @@ export class AwinService {
                         .select()
                         .single();
 
+                    if (logError) {
+                        console.error(`Failed to create sync log for ${platformName}:`, logError);
+                        // Continue anyway to try to sync products, but warn
+                    }
+
                     const logId = logEntry?.id;
 
                     const stats = await this.downloadAndProcessFeed(feedUrl, partner.id, partner.name, logId);
