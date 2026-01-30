@@ -28,7 +28,8 @@ export type Platform =
     | "fnac"           // Fnac via Awin (Culture & Tech)
     | "fnaces"         // Fnac ES
     | "decathlon"      // Decathlon via Awin (Sports)
-    | "decathlones";   // Decathlon ES
+    | "decathlones"    // Decathlon ES
+    | "bikilaes";      // BIKILA ES via Awin (Running & Sports)
 
 // ============================================
 // GIFT QUIZ TYPES

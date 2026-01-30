@@ -204,8 +204,8 @@ export class AwinService {
             // Baby / Kids
             if (catLower.match(/toys|baby|games|juguetes|bebe|ninos|infantil/)) return 'baby-kids';
 
-            // Sports
-            if (catLower.match(/sports|fitness|deportes|gimnasio|aire libre|camping/)) return 'sports-outdoors';
+            // Sports (Enhanced for BIKILA: Running & Trail specialists)
+            if (catLower.match(/sports|fitness|deportes|gimnasio|aire libre|camping|running|trail|atletismo|maraton|triatlon|zapatillas|correr/)) return 'sports-outdoors';
 
             // Art / Collectibles
             if (catLower.match(/arts|hobbies|crafts|arte|ocio|coleccionismo|papeleria/)) return 'collectibles-art';
@@ -225,7 +225,7 @@ export class AwinService {
         if (text.match(/\b(iphone|laptop|macbook|samsung|pixel|tablet|ordenador|portatil|gaming|switch|ps5|xbox|monitor)\b/)) return 'tech-electronics';
         if (text.match(/\b(shirt|dress|jeans|jacket|sneakers|shoes|bag|watch|ropa|camiseta|vestido|zapatos|bolso|reloj|joya)\b/)) return 'fashion';
         if (text.match(/\b(sofa|chair|table|lamp|bed|furniture|home|hogar|mueble|mesa|decoracion)\b/)) return 'home-garden';
-        if (text.match(/\b(bike|bicycle|gym|fitness|yoga|sports|deporte|bici|gimnasio|futbol|tenis)\b/)) return 'sports-outdoors';
+        if (text.match(/\b(bike|bicycle|gym|fitness|yoga|sports|deporte|bici|gimnasio|futbol|tenis|running|trail|zapatillas|maraton)\b/)) return 'sports-outdoors';
 
         // Media comes before Baby-Kids to catch CDs/Books for children correctly
         if (text.match(/\b(book|libro|novela|comic)\b/)) return 'books';

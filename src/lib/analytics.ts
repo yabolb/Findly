@@ -16,15 +16,17 @@ declare global {
 export const sendEvent = (eventName: string, params?: Record<string, any>) => {
     if (typeof window === 'undefined') return;
 
-    // Check for Cookiebot consent (statistics or marketing usually required for GA)
-    // We strictly check 'statistics' as per common compliance for analytics.
-    const hasConsent = window.Cookiebot?.consent?.statistics;
+    // Check for Cookiebot consent if available.
+    // If Cookiebot object is missing (loading delay, dev env, blockers), we default to sending
+    // and let the underlying Google Tag (Consent Mode) handle the compliance/blocking logic.
+    const cookiebot = window.Cookiebot;
+    const hasConsent = cookiebot ? cookiebot.consent?.statistics : true;
 
     if (hasConsent) {
         sendGAEvent('event', eventName, params || {});
     } else {
         if (process.env.NODE_ENV === 'development') {
-            console.log(`[Analytics] Event '${eventName}' skipped due to missing consent.`);
+            console.warn(`[Analytics] Event '${eventName}' skipped: User strictly denied analytics consent.`);
         }
     }
 };

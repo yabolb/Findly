@@ -10,6 +10,7 @@ export const PLATFORM_LOGOS: Record<Platform, string> = {
     fnaces: "📚",
     decathlon: "⚽",
     decathlones: "⚽",
+    bikilaes: "👟",
 };
 
 // Platform display names
@@ -22,6 +23,7 @@ export const PLATFORM_NAMES: Record<Platform, string> = {
     fnaces: "Fnac",
     decathlon: "Decathlon",
     decathlones: "Decathlon",
+    bikilaes: "BIKILA",
 };
 
 // Category icons for quiz chips
