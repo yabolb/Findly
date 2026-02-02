@@ -88,12 +88,12 @@ export class AwinService {
     /**
      * Get the Feed ID (FID) for a specific advertiser by fetching the feed list
      */
-    async getFeedId(advertiserId: number): Promise<number | null> {
+    async getFeedIds(advertiserId: number): Promise<number[]> {
         const apiKey = AWIN_FEED_KEY || AWIN_API_TOKEN;
         const listUrl = `https://productdata.awin.com/datafeed/list/apikey/${apiKey}`;
 
         try {
-            console.log(`Fetching feed list to find FID for advertiser ${advertiserId}...`);
+            console.log(`Fetching feed list to find FIDs for advertiser ${advertiserId}...`);
             const response = await fetch(listUrl);
             if (!response.ok) throw new Error(`Failed to fetch feed list: ${response.statusText}`);
 
@@ -116,10 +116,20 @@ export class AwinService {
 
             if (potentialFeeds.length === 0) {
                 console.warn(`No active feed found for advertiser ${advertiserId}`);
-                return null;
+                return [];
             }
 
-            // Preference logic:
+            // Special Logic for Fnac (77630) - Multi-Feed
+            if (advertiserId === 77630) {
+                // Prioritize Hardware (Tech), Toys, Music, Books, Home
+                const relevantFeeds = potentialFeeds.filter(f =>
+                    f.name.match(/HARDWARE|JUGUETES|MUSICA|LIBROS|HOGAR|SONIDO|FOTO|CONSOLAS/i)
+                );
+                console.log(`Selected ${relevantFeeds.length} feeds for Fnac`);
+                return relevantFeeds.map(f => f.id);
+            }
+
+            // Preference logic for others:
             // 1. Look for 'GENERAL' or 'UNIVERSAL' or 'SIN LIBROS'
             const generalFeed = potentialFeeds.find(f =>
                 f.name.match(/GENERAL|UNIVERSAL|SIN LIBROS|MODA Y OCIO|Padrão|Default/i)
@@ -127,16 +137,16 @@ export class AwinService {
 
             if (generalFeed) {
                 console.log(`Selected General Feed: ${generalFeed.name} (${generalFeed.id}) with ${generalFeed.count} items`);
-                return generalFeed.id;
+                return [generalFeed.id];
             }
 
             // 2. Fallback to the largest feed
             const largestFeed = potentialFeeds.sort((a, b) => b.count - a.count)[0];
             console.log(`Selected Largest Feed: ${largestFeed.name} (${largestFeed.id}) with ${largestFeed.count} items`);
-            return largestFeed.id;
+            return [largestFeed.id];
         } catch (error) {
             console.error('Error fetching feed list:', error);
-            return null;
+            return [];
         }
     }
 
@@ -388,63 +398,65 @@ export class AwinService {
 
             // 2. Iterate and Sync
             for (const partner of partners) {
-                // Dynamic discovery of Feed ID
-                const feedId = await this.getFeedId(partner.id);
+                // Dynamic discovery of Feed IDs
+                const feedIds = await this.getFeedIds(partner.id);
 
-                if (!feedId) {
+                if (!feedIds || feedIds.length === 0) {
                     console.warn(`Skipping ${partner.name} (No active feed found)`);
                     continue;
                 }
 
-                const feedUrl = this.getFeedUrl(feedId);
+                // 1. Cleanup old running logs for this platform (once per partner)
+                const platformName = `awin-${partner.name}`;
+                await this.cleanupStaleLogs(platformName);
 
-                try {
-                    // 1. Cleanup old running logs for this platform
-                    const platformName = `awin-${partner.name}`;
-                    await this.cleanupStaleLogs(platformName);
+                // Process each feed
+                for (const feedId of feedIds) {
+                    const feedUrl = this.getFeedUrl(feedId);
 
-                    // 2. Log start and capture ID
-                    const { data: logEntry, error: logError } = await supabase
-                        .from('sync_logs')
-                        .insert({
-                            platform: platformName,
-                            status: 'running',
-                            items_found: 0,
-                            items_added: 0
-                        })
-                        .select()
-                        .single();
-
-                    if (logError) {
-                        console.error(`Failed to create sync log for ${platformName}:`, logError);
-                        // Continue anyway to try to sync products, but warn
-                    }
-
-                    const logId = logEntry?.id;
-
-                    const stats = await this.downloadAndProcessFeed(feedUrl, partner.id, partner.name, logId);
-
-                    // Update existing log with final stats
-                    if (logId) {
-                        await supabase
+                    try {
+                        // 2. Log start and capture ID
+                        const { data: logEntry, error: logError } = await supabase
                             .from('sync_logs')
-                            .update({
-                                status: 'success',
-                                items_found: stats.processed,
-                                items_added: stats.added,
-                                error_message: stats.errors > 0 ? `${stats.errors} row errors` : null
+                            .insert({
+                                platform: platformName,
+                                status: 'running',
+                                items_found: 0,
+                                items_added: 0
                             })
-                            .eq('id', logId);
-                    }
+                            .select()
+                            .single();
 
-                } catch (err: any) {
-                    console.error(`Failed sync for ${partner.name}:`, err);
-                    // Log failure - This might need to update the existing log if logId exists
-                    await supabase.from('sync_logs').insert({
-                        platform: `awin-${partner.name}`,
-                        status: 'error',
-                        error_message: err.message
-                    });
+                        if (logError) {
+                            console.error(`Failed to create sync log for ${platformName}:`, logError);
+                        }
+
+                        const logId = logEntry?.id;
+
+                        const stats = await this.downloadAndProcessFeed(feedUrl, partner.id, partner.name, logId);
+
+                        // Update existing log with final stats
+                        if (logId) {
+                            await supabase
+                                .from('sync_logs')
+                                .update({
+                                    status: 'success',
+                                    items_found: stats.processed,
+                                    items_added: stats.added,
+                                    error_message: stats.errors > 0 ? `${stats.errors} row errors` : null
+                                })
+                                .eq('id', logId);
+                        }
+
+                    } catch (err: any) {
+                        console.error(`Failed sync for ${partner.name} (Feed ${feedId}):`, err);
+                        // Log failure
+                        await supabase.from('sync_logs').insert({
+                            platform: platformName,
+                            status: 'error',
+                            error_message: `Feed ${feedId}: ` + err.message
+                        });
+                    }
                 }
             }
 

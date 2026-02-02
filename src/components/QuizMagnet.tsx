@@ -32,7 +32,7 @@ export default function QuizMagnet() {
                     </p>
                     <Link href="/quiz" onClick={() => sendEvent('quiz_start', { source: 'magnet_desktop' })}>
                         <button className="w-full bg-white hover:bg-gray-50 text-primary font-semibold px-4 py-3 rounded-full transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105">
-                            Usar el Asesor Inteligente
+                            Encontrar el regalo ideal
                         </button>
                     </Link>
                 </div>
@@ -60,7 +60,7 @@ export default function QuizMagnet() {
                         </div>
                         <Link href="/quiz" onClick={() => sendEvent('quiz_start', { source: 'magnet_mobile' })}>
                             <button className="bg-white hover:bg-gray-50 text-primary font-semibold px-5 py-2.5 rounded-full transition-all duration-200 shadow-lg whitespace-nowrap text-sm">
-                                Empezar Quiz
+                                Encontrar regalo
                             </button>
                         </Link>
                     </div>

@@ -13,9 +13,14 @@ export default function StartQuizButton() {
                     <span className="absolute inset-0 rounded-full bg-primary animate-ping opacity-20" />
 
                     <Gift className="w-6 h-6" />
-                    <span>Empezar Cuestionario</span>
+                    <span>Encontrar el regalo ideal</span>
                 </button>
             </Link>
+
+            {/* Trust indicators micro-copy */}
+            <p className="text-sm text-slate-500 mt-3 text-center">
+                Gratis • Sin registro • Resultados al instante
+            </p>
         </div>
     );
 }
